@@ -10,7 +10,19 @@ import { COUNTRY_NAMES } from "./country-names";
  * A felhasználók a felületen saját átkelőket is felvehetnek (a böngészőben tárolódnak,
  * JSON-ként exportálhatók / importálhatók, és a megosztott linkben is utaznak).
  */
-export const BUILTIN_CROSSINGS: BorderCrossing[] = [];
+export const BUILTIN_CROSSINGS: BorderCrossing[] = [
+  {
+    id: "builtin-at-fernpass",
+    name: "Fernpass (B179, Ausztria)",
+    lat: 47.3604,
+    lon: 10.8299,
+    countries: ["DE", "AT"],
+    requireIn: ["AT"],
+    mode: "any",
+    radiusM: 350,
+    note: "Fernpass (B179): hegyi átkelő – kamionos átmenő forgalomnak az autópályás átkelő (Kufstein / A12) az ideális; csak ausztriai fel-/lerakás esetén használjuk.",
+  },
+];
 
 export const DEFAULT_RADIUS_M = 80;
 

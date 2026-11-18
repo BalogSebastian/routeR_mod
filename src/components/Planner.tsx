@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { memo, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Results from "./Results";
+import { useDriverPageUrl } from "./DriverSend";
 import { Logo } from "./Brand";
 import WaypointInput from "./WaypointInput";
 import { Card, Ico, Num, Toggle } from "./ui";
@@ -565,6 +566,15 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
 
   const best = routes[selected];
 
+  // sofőr-nézet: gombbal megnyitható, és az irányítópultról (?driver=1) automatikusan megnyílik
+  const driverUrl = useDriverPageUrl(best, routeWps, options.departure);
+  const autoDriver = useRef(typeof window !== "undefined" && new URLSearchParams(window.location.search).get("driver") === "1");
+  useEffect(() => {
+    if (!autoDriver.current || !driverUrl) return;
+    autoDriver.current = false;
+    window.location.replace(driverUrl);
+  }, [driverUrl]);
+
   // stabil kezelők a memo-zott térképnek / eredmény-panelnek
   const sOnStopMove = useStable(onStopMove);
   const sOnStopDrop = useStable(onStopDrop);
@@ -962,6 +972,11 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
             <button onClick={saveTrip} disabled={saveState === "saving"} className="btn mb-2 w-full">
               {saveState === "saving" ? "Mentés…" : saveState === "saved" ? "✓ Elmentve a fiókodba" : tripId ? "💾 Fuvar frissítése" : "💾 Mentés fuvarként"}
             </button>
+          )}
+          {best && !loading && driverUrl && (
+            <a href={driverUrl} target="_blank" rel="noreferrer" className="btn mb-2 w-full !border-violet-200 !bg-violet-50 !text-violet-700 hover:!bg-violet-100">
+              🚚 Sofőr-nézet megnyitása
+            </a>
           )}
           <button onClick={() => calc()} disabled={!ready || loading} className="cta">
             {loading ? (<><span className="spinner" /> Számítás… (hosszú útnál ~10–30 mp)</>) : ready ? (<><Ico name="route" className="h-[18px] w-[18px]" /> Útvonal és költség számítása</>) : "Add meg az indulást és az érkezést"}

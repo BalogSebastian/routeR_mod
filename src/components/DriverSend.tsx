@@ -21,6 +21,21 @@ function download(name: string, text: string, type: string) {
   URL.revokeObjectURL(url);
 }
 
+/** a sofőr-oldal linkje az aktuális útvonalból (üres, amíg nincs kiszámolt útvonal) */
+export function useDriverPageUrl(route: RouteResult | undefined, waypoints: Waypoint[], departure: string): string {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    if (!route || waypoints.length < 2) return;
+    let alive = true;
+    const points = navPoints(route, waypoints);
+    void encodeTrip(driverTrip(route, waypoints, points, departure)).then((enc) => {
+      if (alive) setUrl(`${window.location.origin}/sofor#d=${enc}`);
+    });
+    return () => { alive = false; };
+  }, [route, waypoints, departure]);
+  return route && waypoints.length >= 2 ? url : "";
+}
+
 /** „Sofőrnek küldés”: a sofőr egy koppintással indítja a navigációt (Google Maps / Waze / OsmAnd). */
 export default function DriverSend({ route, waypoints, departure }: Props) {
   const points = useMemo(() => navPoints(route, waypoints), [route, waypoints]);
