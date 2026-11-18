@@ -95,8 +95,10 @@ export async function GET(req: NextRequest) {
       const fc = { type: "FeatureCollection" as const, features };
       await NearCache.updateOne({ _id: `${la},${lo},${r}` }, { $set: { fc, at: new Date() } }, { upsert: true }).catch(() => {});
       return Response.json(fc, { headers: { "Cache-Control": "private, max-age=86400" } });
-    } catch {
-      return Response.json({ error: "A parkoló-adatbázis (Overpass) most túlterhelt – próbáld újra." }, { status: 504 });
+    } catch (e) {
+      const detail = e instanceof AggregateError ? e.errors.map((x, i) => `${ENDPOINTS[i]?.split("/")[2]}: ${(x as Error).message}`) : [String(e)];
+      console.error("nearby overpass", detail);
+      return Response.json({ error: "A parkoló-adatbázis (Overpass) most túlterhelt – próbáld újra.", detail }, { status: 504 });
     }
   }
   const [s, w, n, e] = ["s", "w", "n", "e"].map((k) => parseFloat(sp.get(k) ?? ""));
