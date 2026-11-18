@@ -17,15 +17,25 @@ ${cta ? `<a href="${cta.href}" style="display:inline-block;margin-top:22px;backg
 </div></div></body></html>`;
 }
 
-async function send(to: string, subject: string, html: string) {
+export interface SendResult { ok: boolean; error?: string; accepted?: string[]; response?: string }
+
+async function send(to: string, subject: string, html: string): Promise<SendResult> {
   const t = transport();
-  if (!t) return;
+  if (!t) return { ok: false, error: "Az EMAIL_USER / EMAIL_PASS nincs beállítva a szerveren." };
   try {
-    await t.sendMail({ from: `"routeR by tesotter" <${process.env.EMAIL_USER}>`, to, subject, html });
+    const r = await t.sendMail({ from: `"routeR by tesotter" <${process.env.EMAIL_USER}>`, to, subject, html });
+    if (!r.accepted?.length) return { ok: false, error: `A levelet a szerver nem fogadta el: ${r.rejected?.join(", ") ?? "ismeretlen ok"}`, response: r.response };
+    return { ok: true, accepted: r.accepted as string[], response: r.response };
   } catch (e) {
-    console.error("E-mail küldési hiba:", (e as Error).message);
+    const msg = (e as Error).message;
+    console.error("E-mail küldési hiba:", msg);
+    return { ok: false, error: msg };
   }
 }
+
+/** admin: teszt-levél a saját címre (a hibaüzenet visszajön) */
+export const sendTestMail = (to: string) =>
+  send(to, "[routeR] E-mail teszt", shell("Az e-mail küldés működik", "Ez egy teszt-levél a routeR e-mail beállításának ellenőrzéséhez. Ha ezt olvasod, a jelszó-visszaállító és az értesítő levelek is ki tudnak menni."));
 
 /** új regisztráció: értesítés az adminnak */
 export async function notifyAdminNewUser(u: { name: string; email: string; company?: string }) {

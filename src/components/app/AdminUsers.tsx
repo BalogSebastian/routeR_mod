@@ -29,11 +29,30 @@ export default function AdminUsers({ initial, me }: { initial: AdminUser[]; me: 
     setBusy(null);
   };
 
+  const [mail, setMail] = useState<{ ok: boolean; text: string } | null>(null);
+  const [mailBusy, setMailBusy] = useState(false);
+  const testMail = async () => {
+    setMailBusy(true); setMail(null);
+    try {
+      const res = await fetch("/api/admin/mail-test", { method: "POST" });
+      const j = await res.json().catch(() => ({}));
+      setMail(j.ok ? { ok: true, text: `Elküldve ide: ${j.to} (feladó: ${j.sender}). Nézd meg a bejövő és a spam mappát is.` } : { ok: false, text: `Hiba: ${j.error ?? "ismeretlen"}` });
+    } catch {
+      setMail({ ok: false, text: "Hálózati hiba." });
+    }
+    setMailBusy(false);
+  };
+
   const sorted = [...users].sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending") || +new Date(b.createdAt) - +new Date(a.createdAt));
   const pending = users.filter((u) => u.status === "pending").length;
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm">
+        <span className="text-slate-600">E-mail küldés (jelszó-visszaállítás, értesítők)</span>
+        <button className="btn !py-1.5 !text-xs" onClick={testMail} disabled={mailBusy}>{mailBusy ? "Küldés…" : "✉️ Teszt e-mail küldése"}</button>
+        {mail && <span className={`text-xs ${mail.ok ? "text-emerald-700" : "text-rose-700"}`}>{mail.text}</span>}
+      </div>
       {pending > 0 && <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">⏳ <b>{pending}</b> regisztráció vár jóváhagyásra.</div>}
       {error && <div className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</div>}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
