@@ -1,0 +1,329 @@
+export type LngLat = [number, number];
+
+export interface Waypoint {
+  lat: number;
+  lon: number;
+  label: string;
+  /** az útvonal húzásával létrejött áthaladási pont (nem megálló) */
+  via?: boolean;
+  /** komp / vasúti járat (a katalógus azonosítója); lat/lon ilyenkor a járat közepe */
+  ferry?: string;
+  /**
+   * rakodás ezen a ponton (a feltételes határátkelőkhöz). Ha nincs megadva:
+   * az indulás felrakás, az érkezés lerakás, a köztes megálló mindkettő.
+   */
+  cargo?: CargoKind;
+}
+
+export type CargoKind = "load" | "unload" | "both" | "none";
+
+/**
+ * Feltételes határátkelő: csak akkor használható, ha a fuvarnak van felrakása / lerakása
+ * a megadott ország(ok) valamelyikében – különben az útvonal elkerüli.
+ */
+export interface BorderCrossing {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+  /** az átkelő két oldala (ISO alpha-2) */
+  countries: string[];
+  /** ezen országok valamelyikében kell rakodni, hogy az átkelő használható legyen */
+  requireIn: string[];
+  /** any: felrakás vagy lerakás · load: csak felrakás · unload: csak lerakás */
+  mode: "any" | "load" | "unload";
+  /** a lezárt terület sugara (m), alapértelmezés 80 */
+  radiusM?: number;
+  note?: string;
+  /** kikapcsolt szabály (nem érvényes) */
+  disabled?: boolean;
+}
+
+export type EuroClass = "euro6" | "euro5" | "euro4" | "older";
+
+export interface Vehicle {
+  /** teljes tömeg tonnában */
+  weight: number;
+  /** tengelyterhelés tonnában */
+  axleLoad: number;
+  height: number;
+  width: number;
+  length: number;
+  axles: number;
+  euro: EuroClass;
+  hazmat: boolean;
+  /** átlagfogyasztás l/100 km */
+  consumption: number;
+}
+
+export interface CostInputs {
+  fuelPrice: number; // EUR / liter
+  driverHourly: number; // EUR / óra (teljes munkáltatói költség)
+  /** EUR / nap: napidíj, szállás */
+  driverDaily: number;
+  vehicleKm: number; // EUR / km (gumi, szerviz, kopás)
+  /** EUR / nap: amortizáció / lízing, biztosítás, gépjárműadó */
+  vehicleDaily: number;
+  eurHuf: number; // HUF / EUR
+}
+
+/** No-Go zóna: egész ország vagy saját rajzolt terület */
+export interface NoGoArea {
+  id: string;
+  name: string;
+  /** zárt gyűrű [lng,lat][] */
+  ring: LngLat[];
+}
+
+export interface NoGo {
+  /** ISO alpha-2 országkódok */
+  countries: string[];
+  areas: NoGoArea[];
+}
+
+/** a felhasználó saját (pl. szerződéses) komp-ára / menetideje */
+export interface FerryOverride {
+  priceEur?: number;
+  durationH?: number;
+}
+
+export interface RouteOptions {
+  avoidTolls: boolean;
+  avoidHighways: boolean;
+  /** indulási idő ISO (helyi, tz nélkül) */
+  departure: string;
+  noGo?: NoGo;
+  ferryOverrides?: Record<string, FerryOverride>;
+  /** EU 561/2006 rugalmasság: heti 2× 10 órás vezetés, 3× 9 órás csökkentett pihenő */
+  flexRules?: boolean;
+  /** a hétvégi / ünnepnapi tilalmak kivárása beépül az érkezési időbe */
+  waitBans?: boolean;
+  /** a felhasználó feltételes határátkelői */
+  crossings?: BorderCrossing[];
+  /** a beépített katalógus kikapcsolt átkelői (azonosítók) */
+  crossingsOff?: string[];
+  /** a már ismert kizárt pontok (No-Go zóna) – a húzás közbeni előnézethez */
+  exclude?: { lat: number; lon: number }[];
+}
+
+export interface RouteRequest {
+  waypoints: Waypoint[];
+  vehicle: Vehicle;
+  costs: CostInputs;
+  options: RouteOptions;
+}
+
+export interface TollSegment {
+  country: string;
+  km: number;
+  rate: number;
+  cost: number;
+  note?: string;
+}
+
+export interface CountryLeg {
+  country: string;
+  startKm: number;
+  km: number;
+  tollKm: number;
+  toll: number;
+  /** becsült belépés/kilépés (ISO, helyi indulási idő alapján) */
+  enter: string;
+  leave: string;
+}
+
+export interface BanWarning {
+  country: string;
+  severity: "danger" | "warn" | "info";
+  text: string;
+}
+
+export interface TollBreakdownItem {
+  country: string;
+  tollKm: number;
+  perKm: number;
+  fixed: number;
+  total: number;
+  note: string;
+  roads: string[];
+  confidence: "official" | "source" | "estimate" | "none";
+  asOf: string;
+}
+
+export interface SpecialItem {
+  id: string;
+  name: string;
+  country: string;
+  km: number;
+  /** EUR; 0 ha a díj nincs bekalkulálva */
+  fee: number;
+  modelled: boolean;
+  note: string;
+  confidence: "official" | "source" | "estimate";
+  asOf: string;
+}
+
+export interface TripStop {
+  id: string;
+  /** valós kamionparkoló neve, ha oda illesztettük */
+  place?: string;
+  anchored?: boolean;
+  /** a menetrend-szabály megsértése ennél a megállónál */
+  warn?: string;
+  /** az útvonal mentén megtett arány 0..1 */
+  f: number;
+  kind: "break" | "rest" | "wait" | "ferry";
+  /** a megálló hossza (óra) */
+  durH?: number;
+  /** vezetés kezdete óta, óra */
+  atH: number;
+  /** út menti km */
+  km: number;
+  lat: number;
+  lon: number;
+  country: string;
+  /** becsült időpont (ISO, helyi) */
+  time: string;
+  day: number;
+}
+
+export interface DriveSchedule {
+  drivingH: number;
+  breaks45: number;
+  dailyRests: number;
+  totalH: number;
+  days: number;
+  arrival: string;
+  /** a célország helyi ideje szerinti érkezés (ha eltér) */
+  arrivalLocal?: string;
+  /** tilalom miatti várakozás (óra) */
+  waitH: number;
+  /** komp / vasút (óra, beszállással) */
+  ferryH: number;
+}
+
+/** útvonal-arány (0..1) → addig megtett vezetési idő (óra), szakaszonként lineáris */
+export type TimeProfile = [number, number][];
+
+export interface FerryLeg {
+  id: string;
+  name: string;
+  kind: "ferry" | "rail";
+  from: string;
+  to: string;
+  f0: number;
+  f1: number;
+  km: number;
+  durationH: number;
+  checkInH: number;
+  priceEur: number;
+  /** van-e kabin / fekhely (a hajóút napi pihenőnek számíthat, 561/2006 9. cikk) */
+  berth: boolean;
+  /** a katalógusból / a felhasználó áraiból jött, vagy csak becsült */
+  priced: "catalog" | "user" | "estimate";
+  note: string;
+  geometry: LngLat[];
+}
+
+export interface RouteResult {
+  id: number;
+  distanceKm: number;
+  drivingMin: number;
+  /** [lng,lat][] */
+  geometry: LngLat[];
+  /** toll-szakaszok geometriái a térképen való kiemeléshez */
+  tollGeometry: LngLat[][];
+  countries: CountryLeg[];
+  tollBreakdown: TollBreakdownItem[];
+  tollTotalEur: number;
+  /** km közúton (komp nélkül) */
+  roadKm: number;
+  /** a teljes távolság díjköteles km-ei */
+  tollKm: number;
+  ferries: FerryLeg[];
+  ferryTotalEur: number;
+  profile: TimeProfile;
+  /** a feltételes határátkelők az útvonal mentén (használt vagy elkerült) */
+  crossings: CrossingUse[];
+  /** a No-Go zónák figyelmeztetései / érintett km */
+  noGo: { name: string; km: number; unavoidable: boolean }[];
+  /** alagút-/szakaszdíjak (benne vannak a tollTotalEur-ban, ha modelled) */
+  specials: SpecialItem[];
+  specialsTotalEur: number;
+  fuelLiters: number;
+  fuelCostEur: number;
+  driverCostEur: number;
+  vehicleCostEur: number;
+  totalEur: number;
+  /** tájékoztató: az útdíj-számítás becsült pontossága (0..1) a tarifák megbízhatósága alapján */
+  tollConfidence: number;
+  schedule: DriveSchedule;
+  stops: TripStop[];
+  warnings: BanWarning[];
+  highways: boolean;
+  ferry: boolean;
+  tollAccuracy: "edge" | "maneuver";
+  maneuvers: { text: string; km: number; min: number; street?: string }[];
+  /** az útvonal útszakaszokra bontva: melyik úton, mikor, hány km (a térképes kiemeléshez f0/f1) */
+  sections: RoadSection[];
+}
+
+export type RoadClassKey = "motorway" | "trunk" | "primary" | "secondary" | "minor" | "local" | "ferry";
+
+/** Egy összefüggő útszakasz ugyanazon az úton (pl. „M1”, „A4”, „B 12”) */
+export interface RoadSection {
+  /** útszám (M1, A4, B 12, 6…), ha van */
+  ref?: string;
+  /** európai útszámok (E 60…) */
+  euro?: string[];
+  /** utcanév / út neve */
+  name?: string;
+  /** megjelenített cím: útszám vagy utcanév */
+  label: string;
+  cls: RoadClassKey;
+  country: string;
+  /** az útvonal mentén megtett km a szakasz elején */
+  startKm: number;
+  km: number;
+  /** geometriai arány az útvonal mentén (0..1) */
+  f0: number;
+  f1: number;
+  /** vezetési idő (óra, kamionos sebességmodell) */
+  h: number;
+  /** modellezett átlagsebesség km/h */
+  speed: number;
+  /** a leggyakoribb kihelyezett sebességkorlát km/h */
+  limit?: number;
+  tollKm: number;
+  /** a szakasz útdíja (EUR) */
+  tollEur: number;
+  /** a táblák szerinti irány (a szakaszon látható első útirány-tábla) */
+  toward?: string;
+  /** lehajtó: sorszám és irány a szakasz végén / közben */
+  exit?: string;
+  /** összevont kisebb utak: a leghosszabb utcanevek */
+  via?: string[];
+  /** becsült áthaladás kezdete / vége (ISO, helyi indulási idő alapján; a menetrend tölti ki) */
+  start: string;
+  end: string;
+}
+
+export interface CrossingUse {
+  id: string;
+  name: string;
+  countries: string[];
+  /** a fuvar alapján használható-e */
+  allowed: boolean;
+  /** az útvonal áthalad rajta */
+  used: boolean;
+  /** távolság az útvonaltól (km) */
+  distKm: number;
+  reason: string;
+}
+
+export interface RouteResponse {
+  routes: RouteResult[];
+  source: string;
+  /** a No-Go zónák elkerüléséhez használt kizárt pontok (az előnézethez újrahasznosítható) */
+  exclude: { lat: number; lon: number }[];
+}
