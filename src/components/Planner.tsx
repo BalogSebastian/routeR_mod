@@ -954,10 +954,6 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
             </>
           )}
 
-          <p className="px-1 pt-1 text-[11px] leading-relaxed text-slate-400">
-            Térkép és úthálózat: © OpenStreetMap közreműködők. Útvonaltervezés: Valhalla. Geokódolás: Photon. Parkolók, korlátozások: Overpass.
-            Az útdíjak nettó (ÁFA nélküli) összegek, 2026-os hivatalos tarifákból; a tilalmak és kompárak tájékoztató jellegűek – fuvar előtt ellenőrizd a hivatalos forrásokat.
-          </p>
         </div>
 
         <footer className={`shrink-0 border-t border-slate-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 ${panelOpen ? "" : "hidden md:block"}`}>
