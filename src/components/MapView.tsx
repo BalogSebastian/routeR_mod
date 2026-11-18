@@ -8,6 +8,7 @@ import type { BorderCrossing, CrossingUse, LngLat, NoGoArea, RouteResult, Vehicl
 import { cumulative, pointAtFraction, snapToRoute } from "@/lib/schedule";
 import { sliceFraction } from "@/lib/sections";
 import { circleRing } from "@/lib/zones";
+import Flyover from "./Flyover";
 
 // A worker a public/ mappából jön (a Turbopack nem tudja automatikusan becsomagolni).
 maplibregl.setWorkerUrl("/maplibre-gl-worker.mjs");
@@ -52,6 +53,10 @@ interface Props {
   highlightSection?: number | null;
   /** erre a szakaszra közelítsen rá a térkép */
   zoomSection?: { i: number; t: number } | null;
+  /** útvonal-lejátszás (animált végigmenés) */
+  flyover?: boolean;
+  departure?: string;
+  onFlyoverClose?: () => void;
 }
 
 const EMPTY: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: [] };
@@ -83,7 +88,7 @@ function supportsWebGL2(): boolean {
 export default function MapView({
   waypoints, routes, selected, vehicle, showRestrictions, showParking, onContext, pickMode, onPick, onSelectRoute, onStopMove, onStopDrop, onWaypointDrag, onRouteDrag, onWaypointRemove, keepView,
   zoneCountries, zoneAreas, drawMode, circleKm, onDrawDone, onDrawCancel, onRoutePreview,
-  crossings = [], crossStatus, focus, onPickCancel, highlightSection = null, zoomSection = null,
+  crossings = [], crossStatus, focus, onPickCancel, highlightSection = null, zoomSection = null, flyover = false, departure = "", onFlyoverClose,
 }: Props) {
   const crossMarkers = useRef<Marker[]>([]);
   const drawRef = useRef({ drawMode, circleKm, onDrawDone, onDrawCancel });
@@ -99,6 +104,7 @@ export default function MapView({
   const mapRef = useRef<MLMap | null>(null);
   const markers = useRef<Marker[]>([]);
   const [ready, setReady] = useState(false);
+  const [mapInst, setMapInst] = useState<MLMap | null>(null);
   const [restrStatus, setRestrStatus] = useState<string>("");
   const [parkStatus, setParkStatus] = useState<string>("");
   /** a megálló körüli (40 km) parkolók / pihenők – hover */
@@ -420,6 +426,7 @@ export default function MapView({
       map.on("touchend", (e) => { clearTimeout(touchTimer); endDrag(e.lngLat.lng, e.lngLat.lat); });
 
       setReady(true);
+      setMapInst(map);
     });
     map.on("click", (e) => {
       const dm = drawRef.current.drawMode;
@@ -828,6 +835,9 @@ export default function MapView({
           {pickMode === -1 ? "Kattints pontosan a határátkelőre (a határon átmenő útra)" : "Kattints a térképen a pont kijelöléséhez"}
           {onPickCancel && <button className="ml-2 rounded-full bg-white/15 px-2.5 py-0.5 text-xs" onClick={onPickCancel}>Mégse</button>}
         </div>
+      )}
+      {flyover && mapInst && routes[selected] && onFlyoverClose && (
+        <Flyover key={`${selected}-${routes[selected].distanceKm}`} map={mapInst} route={routes[selected]} departure={departure} onClose={onFlyoverClose} />
       )}
       {near && (
         <div className="pointer-events-none absolute left-3 top-24 z-10 w-[min(92%,300px)] rounded-2xl border border-violet-200 bg-white/95 p-3.5 text-slate-700 shadow-xl shadow-violet-900/15 backdrop-blur sm:top-3 sm:left-auto sm:right-14">

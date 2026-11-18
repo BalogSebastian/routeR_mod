@@ -145,6 +145,7 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showRestr, setShowRestr] = useState(false);
+  const [flyover, setFlyover] = useState(false);
   const [pickIdx, setPickIdx] = useState<number | null>(null);
   const [panelOpen, setPanelOpen] = useState(true);
   const [keepView, setKeepView] = useState(false);
@@ -584,6 +585,7 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
   const sOnDrawDone = useStable(onDrawDone);
   const sOnDrawCancel = useStable(() => setDrawMode(null));
   const sOnPickCancel = useStable(() => { setPickIdx(null); setCrossPick(false); });
+  const sOnFlyoverClose = useStable(() => setFlyover(false));
   const sOnAddStop = useStable(onAddStop);
   const sOnRemoveStop = useStable(onRemoveStop);
   const sOnResetStops = useStable(onResetStops);
@@ -1030,7 +1032,15 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
           highlightSection={hlSection}
           zoomSection={zoomSection}
           onPickCancel={sOnPickCancel}
+          flyover={flyover}
+          departure={options.departure}
+          onFlyoverClose={sOnFlyoverClose}
         />
+        {best && !loading && !flyover && (
+          <button onClick={() => setFlyover(true)} className="absolute bottom-12 left-3 z-10 flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-3 text-[14px] font-extrabold text-white shadow-xl shadow-violet-900/30 transition hover:-translate-y-0.5 hover:shadow-2xl active:scale-95">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-sm">▶</span> Útvonal-lejátszás
+          </button>
+        )}
       </main>
     </div>
   );
