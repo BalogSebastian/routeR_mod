@@ -44,7 +44,6 @@ export default function DriverSend({ route, waypoints, departure }: Props) {
   const [pageUrl, setPageUrl] = useState("");
   const [qr, setQr] = useState("");
   const [copied, setCopied] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
 
   useEffect(() => {
@@ -110,7 +109,6 @@ export default function DriverSend({ route, waypoints, departure }: Props) {
       <div className="mt-2 flex flex-wrap gap-2 text-xs">
         {pageUrl && <a className="chip" href={pageUrl} target="_blank" rel="noreferrer">👁 Sofőr-oldal</a>}
         {pageUrl && <a className="chip" href={`${pageUrl}&play=1`} target="_blank" rel="noreferrer">🎬 Videó megnyitása</a>}
-        {pageUrl && <button className="chip" onClick={async () => { try { await navigator.clipboard.writeText(`${pageUrl}&play=1`); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); } catch { window.prompt("Videó-link:", `${pageUrl}&play=1`); } }}>{linkCopied ? "Link másolva ✓" : "🔗 Videó-link másolása"}</button>}
         <button className="chip" onClick={() => setShowQr((s) => !s)}>{showQr ? "QR elrejtése" : "▦ QR-kód"}</button>
         <button className="chip" onClick={() => download("utvonal-osmand.gpx", gpxFor(trip.t, points, simplify(route.geometry, 0.00015, 6000)), "application/gpx+xml")}>GPX (OsmAnd)</button>
       </div>

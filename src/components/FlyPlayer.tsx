@@ -33,7 +33,7 @@ export default function FlyPlayer({ data, onClose }: { data: FlyData; onClose: (
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900">
-      <div ref={el} className="absolute inset-0" />
+      <div ref={el} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
       {map && <Flyover map={map} data={data} onClose={onClose} />}
       {!map && <div className="absolute inset-0 flex items-center justify-center text-sm font-medium text-white/80">Térkép betöltése…</div>}
     </div>

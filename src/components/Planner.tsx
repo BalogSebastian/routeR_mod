@@ -147,7 +147,6 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
   const [error, setError] = useState<string | null>(null);
   const [showRestr, setShowRestr] = useState(false);
   const [flyover, setFlyover] = useState(false);
-  const [videoCopied, setVideoCopied] = useState(false);
   const [pickIdx, setPickIdx] = useState<number | null>(null);
   const [panelOpen, setPanelOpen] = useState(true);
   const [keepView, setKeepView] = useState(false);
@@ -980,16 +979,9 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
             </button>
           )}
           {best && !loading && driverUrl && (
-            <div className="mb-2 grid grid-cols-2 gap-2">
-              <a href={driverUrl} target="_blank" rel="noreferrer" className="btn !border-violet-200 !bg-violet-50 !text-violet-700 hover:!bg-violet-100">🚚 Sofőr-nézet</a>
-              <button
-                className="btn !border-violet-200 !bg-violet-50 !text-violet-700 hover:!bg-violet-100"
-                onClick={async () => {
-                  const url = `${driverUrl}&play=1`;
-                  try { await navigator.clipboard.writeText(url); setVideoCopied(true); setTimeout(() => setVideoCopied(false), 2000); } catch { window.prompt("Videó-link:", url); }
-                }}
-              >{videoCopied ? "Link másolva ✓" : "🎬 Videó-link másolása"}</button>
-            </div>
+            <a href={driverUrl} target="_blank" rel="noreferrer" className="btn mb-2 w-full !border-violet-200 !bg-violet-50 !text-violet-700 hover:!bg-violet-100">
+              🚚 Sofőr-nézet megnyitása
+            </a>
           )}
           <button onClick={() => calc()} disabled={!ready || loading} className="cta">
             {loading ? (<><span className="spinner" /> Számítás… (hosszú útnál ~10–30 mp)</>) : ready ? (<><Ico name="route" className="h-[18px] w-[18px]" /> Útvonal és költség számítása</>) : "Add meg az indulást és az érkezést"}
