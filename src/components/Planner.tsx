@@ -607,7 +607,7 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
         <header className="relative shrink-0 border-b border-slate-200 bg-white px-4 py-3">
           <div className="relative flex items-center gap-3">
             <a href="/app" className="flex min-w-0 flex-1 items-center gap-2.5" title="Vissza az irányítópultra">
-              <Logo />
+              <span className="md:hidden"><Logo /></span>
               <div className="min-w-0">
                 <h1 className="brand-word truncate text-[20px] leading-none text-slate-900">route<b className="text-violet-600">R</b> <span className="text-[11px] font-medium tracking-[0.14em] text-slate-400">BY TESOTTER</span></h1>
                 <p className="mt-1 truncate text-[11px] text-slate-500">{tripName ? `📁 ${tripName}` : "Új útvonal · útdíj · fuvarköltség"}</p>
