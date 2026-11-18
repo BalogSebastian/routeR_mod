@@ -1,5 +1,6 @@
 import { getUser } from "@/lib/server/auth";
 import { getDb } from "@/lib/server/models";
+import { hasCoverage, parkingsNear } from "@/lib/server/parkings";
 import type { NextRequest } from "next/server";
 
 /**
@@ -43,6 +44,11 @@ export async function GET(req: NextRequest) {
     const lat = parseFloat(sp.get("lat") ?? ""), lon = parseFloat(sp.get("lon") ?? "");
     const r = Math.min(40, Math.max(1, parseFloat(sp.get("r") ?? "40") || 40));
     if (![lat, lon].every(Number.isFinite) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return Response.json({ error: "koordináta" }, { status: 400 });
+    // 1) saját, előre épített európai adatbázis: azonnali és megbízható
+    if (hasCoverage(lat, lon)) {
+      return Response.json({ type: "FeatureCollection", features: parkingsNear(lat, lon, r) }, { headers: { "Cache-Control": "private, max-age=3600" } });
+    }
+    // 2) lefedetlen terület: élő Overpass-lekérdezés (lassabb), közös gyorsítótárral
     // a találatok cache-elhetők: a pontot ~100 m-re kerekítjük
     const la = lat.toFixed(3), lo = lon.toFixed(3);
     const { NearCache } = await getDb();
