@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { preconnect } from "react-dom";
 import PlannerLoader from "@/components/PlannerLoader";
 import type { InitialTrip, Saved } from "@/components/Planner";
 import { getUser } from "@/lib/server/auth";
@@ -7,6 +8,7 @@ import { getDb, isOid } from "@/lib/server/models";
 export const metadata = { title: "Útvonaltervező" };
 
 export default async function PlannerPage({ searchParams }: { searchParams: Promise<{ trip?: string }> }) {
+  preconnect("https://tile.openstreetmap.org", { crossOrigin: "anonymous" });
   const u = await getUser();
   if (!u) redirect("/login");
   if (u.status !== "active") redirect("/wait");
