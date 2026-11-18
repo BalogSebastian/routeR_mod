@@ -10,7 +10,8 @@ import { addStop, applyPlan, autoPlan, cumulative, fractionAtHours, hoursAt, sna
 import { DEFAULT_COSTS, VEHICLE_PRESETS } from "@/lib/presets";
 import { FERRIES, ferryById, ferryWaypoint } from "@/lib/ferries";
 import { COUNTRY_NAMES } from "@/lib/country-names";
-import { flag } from "@/lib/format";
+import { dt, dur, eur, flag, km } from "@/lib/format";
+import LogoutButton from "./app/LogoutButton";
 import { BUILTIN_CROSSINGS, MODE_LABEL } from "@/lib/crossings";
 import type { BorderCrossing, CargoKind, CostInputs, EuroClass, FerryOverride, LngLat, NoGo, RouteOptions, RouteResult, Vehicle, Waypoint } from "@/lib/types";
 
@@ -59,6 +60,12 @@ function initialNoGo(saved: Saved): NoGo {
 }
 
 const QUICK_NOGO = ["CH", "AT", "DE", "FR", "IT", "GB", "RS"];
+const RAIL = [
+  { href: "/app", label: "Irányítópult", icon: "M3 12l9-8 9 8M5 10v10h5v-6h4v6h5V10", active: false },
+  { href: "/planner", label: "Útvonaltervező", icon: "M5 19a2 2 0 100-4 2 2 0 000 4zM19 9a2 2 0 100-4 2 2 0 000 4zM7 17c6 0 2-10 8-10", active: true },
+  { href: "/app/trips", label: "Fuvaraim", icon: "M4 6h16M4 12h16M4 18h10", active: false },
+  { href: "/app/settings", label: "Fiók", icon: "M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6", active: false },
+];
 const uid = () => Math.random().toString(36).slice(2, 9);
 
 interface Recent { label: string; waypoints: Waypoint[] }
@@ -585,6 +592,17 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
 
   return (
     <div className="flex h-dvh w-full flex-col md:flex-row">
+      <nav className="hidden w-[68px] shrink-0 flex-col items-center gap-1.5 border-r border-slate-200 bg-white py-4 md:flex">
+        <a href="/app" title="routeR – irányítópult" className="mb-4"><Logo className="h-9 w-9" /></a>
+        {RAIL.map((n) => (
+          <a key={n.href} href={n.href} title={n.label} className={`flex h-11 w-11 items-center justify-center rounded-xl transition ${n.active ? "bg-violet-50 text-violet-700" : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"}`}>
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={n.icon} /></svg>
+          </a>
+        ))}
+        <LogoutButton className="mt-auto flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-rose-600">
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /></svg>
+        </LogoutButton>
+      </nav>
       <aside className={`z-10 flex w-full flex-col bg-slate-50 shadow-2xl shadow-violet-900/10 md:w-[460px] md:shrink-0 dark:bg-slate-950 ${panelOpen ? "h-[64dvh] md:h-full" : "h-[68px] md:h-full"}`}>
         <header className="relative shrink-0 border-b border-slate-200 bg-white px-4 py-3">
           <div className="relative flex items-center gap-3">
@@ -595,7 +613,7 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
                 <p className="mt-1 truncate text-[11px] text-slate-500">{tripName ? `📁 ${tripName}` : "Új útvonal · útdíj · fuvarköltség"}</p>
               </div>
             </a>
-            <a href="/app" className="btn !px-2.5 !py-1.5 text-xs">← Irányítópult</a>
+            <a href="/app" className="btn !px-2.5 !py-1.5 text-xs md:hidden">← Irányítópult</a>
             <button className="btn !px-2.5 !py-1.5 text-xs md:hidden" onClick={() => setPanelOpen((o) => !o)}>
               {panelOpen ? "Térkép ▾" : "Panel ▴"}
             </button>
@@ -918,6 +936,25 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
       </aside>
 
       <main className={`relative min-h-0 flex-1 ${panelOpen ? "h-[36dvh] md:h-full" : "h-full"}`}>
+        {best && !loading && (
+          <div className="pointer-events-none absolute left-3 right-14 top-3 z-10 flex flex-wrap gap-2">
+            {[
+              { k: "Távolság", v: km(best.roadKm) },
+              { k: "Vezetés", v: dur(best.drivingMin) },
+              { k: "Útdíj", v: eur(best.tollTotalEur) },
+              { k: "Érkezés", v: dt(best.schedule.arrival) },
+            ].map((x) => (
+              <div key={x.k} className="rounded-2xl border border-slate-200/80 bg-white/90 px-3.5 py-2 shadow-lg shadow-violet-900/10 backdrop-blur">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">{x.k}</div>
+                <div className="text-[15px] font-bold tabular-nums text-slate-900">{x.v}</div>
+              </div>
+            ))}
+            <div className="rounded-2xl bg-violet-600 px-3.5 py-2 text-white shadow-lg shadow-violet-600/30">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-200">Teljes költség</div>
+              <div className="text-[15px] font-bold tabular-nums">{eur(best.totalEur)}</div>
+            </div>
+          </div>
+        )}
         <MapView
           waypoints={waypoints}
           routes={routes}
