@@ -33,6 +33,63 @@ function num(v?: string): number | null {
 export async function GET(req: NextRequest) {
   { const u = await getUser(); if (!u || u.status !== "active") return Response.json({ error: "Jelentkezz be." }, { status: 401 }); }
   const sp = req.nextUrl.searchParams;
+
+  // --- „a megálló körül” mód: minden kamionparkoló és pihenőhely egy sugarú körben (alap 40 km) ---
+  if (sp.get("mode") === "nearby") {
+    const lat = parseFloat(sp.get("lat") ?? ""), lon = parseFloat(sp.get("lon") ?? "");
+    const r = Math.min(40, Math.max(1, parseFloat(sp.get("r") ?? "40") || 40));
+    if (![lat, lon].every(Number.isFinite) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return Response.json({ error: "koordináta" }, { status: 400 });
+    // a találatok cache-elhetők: a pontot ~100 m-re kerekítjük
+    const la = lat.toFixed(3), lo = lon.toFixed(3);
+    const ar = `(around:${Math.round(r * 1000)},${la},${lo})`;
+    const qn = `[out:json][timeout:25];(
+      nwr["amenity"="parking"]["hgv"~"^(yes|designated)$"]${ar};
+      nwr["amenity"="parking"]["capacity:hgv"]${ar};
+      nwr["amenity"="parking"]["parking"="truck"]${ar};
+      nwr["highway"="rest_area"]["hgv"!="no"]${ar};
+      nwr["amenity"="rest_area"]${ar};
+      nwr["highway"="services"]${ar};
+    );out tags center 1500;`;
+    const askN = async (ep: string): Promise<{ elements: OverpassWay[] }> => {
+      const res = await fetch(ep, {
+        method: "POST", body: "data=" + encodeURIComponent(qn),
+        headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json", "User-Agent": "tesotter-truck-planner/1.0" },
+        signal: AbortSignal.timeout(22000),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    };
+    try {
+      const data = await Promise.any(ENDPOINTS.map(askN));
+      const k = Math.cos((+la * Math.PI) / 180);
+      const seen = new Set<string>();
+      const features = data.elements.map((el) => {
+        const c = el.center ?? (el.lat !== undefined && el.lon !== undefined ? { lat: el.lat, lon: el.lon } : null);
+        if (!c) return null;
+        const t = el.tags ?? {};
+        const kind = t.highway === "services" ? "services" : t.highway === "rest_area" || t.amenity === "rest_area" ? "rest" : "truck";
+        const distKm = Math.hypot((c.lon - +lo) * 111.32 * k, (c.lat - +la) * 110.57);
+        if (distKm > r + 0.5) return null;
+        const key = `${kind}:${c.lat.toFixed(4)}:${c.lon.toFixed(4)}`;
+        if (seen.has(key)) return null;
+        seen.add(key);
+        return {
+          type: "Feature" as const,
+          geometry: { type: "Point" as const, coordinates: [c.lon, c.lat] },
+          properties: {
+            kind, distKm: Math.round(distKm * 10) / 10,
+            name: t.name ?? (kind === "services" ? "Szolgáltató terület" : kind === "rest" ? "Pihenőhely" : "Kamionparkoló"),
+            capacity: t["capacity:hgv"] ?? null, fee: t.fee ?? null,
+            supervised: t.supervised ?? t.surveillance ?? null, operator: t.operator ?? null,
+            toilets: t.toilets ?? null, fuel: t["fuel:diesel"] ?? null,
+          },
+        };
+      }).filter(Boolean);
+      return Response.json({ type: "FeatureCollection", features }, { headers: { "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800" } });
+    } catch {
+      return Response.json({ error: "A parkoló-adatbázis (Overpass) most túlterhelt – próbáld újra." }, { status: 504 });
+    }
+  }
   const [s, w, n, e] = ["s", "w", "n", "e"].map((k) => parseFloat(sp.get(k) ?? ""));
   if ([s, w, n, e].some((x) => !Number.isFinite(x))) return Response.json({ error: "bbox" }, { status: 400 });
   const parking = sp.get("mode") === "parking";

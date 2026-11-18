@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
 import type { GeoJSONSource, Map as MLMap, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -101,6 +101,62 @@ export default function MapView({
   const [ready, setReady] = useState(false);
   const [restrStatus, setRestrStatus] = useState<string>("");
   const [parkStatus, setParkStatus] = useState<string>("");
+  /** a megálló körüli (40 km) parkolók / pihenők – hover */
+  const [near, setNear] = useState<{ status: "loading" | "ok" | "error"; label: string; truck: number; rest: number; services: number; msg?: string } | null>(null);
+  const nearTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const nearEnterTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const nearHover = useRef(false);
+  const nearCtrl = useRef<AbortController | null>(null);
+  const nearCache = useRef(new Map<string, GeoJSON.FeatureCollection>());
+  const scheduleHideNear = useRef<() => void>(() => {});
+
+  const hideNear = useCallback(() => {
+    clearTimeout(nearTimer.current);
+    clearTimeout(nearEnterTimer.current);
+    nearCtrl.current?.abort();
+    nearHover.current = false;
+    setNear(null);
+    const map = mapRef.current;
+    if (!map) return;
+    (map.getSource("near") as GeoJSONSource | undefined)?.setData(EMPTY);
+    (map.getSource("ring") as GeoJSONSource | undefined)?.setData(EMPTY);
+  }, []);
+  const scheduleHide = useCallback(() => {
+    clearTimeout(nearTimer.current);
+    nearTimer.current = setTimeout(() => { if (!nearHover.current) hideNear(); }, 1800);
+  }, [hideNear]);
+
+  const showNear = useCallback((lng: number, lat: number, label: string) => {
+    const map = mapRef.current;
+    if (!map) return;
+    clearTimeout(nearTimer.current);
+    clearTimeout(nearEnterTimer.current);
+    // kis késleltetés: ne induljon lekérdezés egy véletlen érintésnél
+    nearEnterTimer.current = setTimeout(async () => {
+      const key = `${lat.toFixed(3)},${lng.toFixed(3)}`;
+      (map.getSource("ring") as GeoJSONSource).setData({ type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [circleRing([lng, lat], 40, 64)] } });
+      const render = (fc: GeoJSON.FeatureCollection) => {
+        (map.getSource("near") as GeoJSONSource).setData(fc);
+        const n = (k: string) => fc.features.filter((f) => f.properties?.kind === k).length;
+        setNear({ status: "ok", label, truck: n("truck"), rest: n("rest"), services: n("services") });
+      };
+      const cached = nearCache.current.get(key);
+      if (cached) { render(cached); return; }
+      setNear({ status: "loading", label, truck: 0, rest: 0, services: 0 });
+      nearCtrl.current?.abort();
+      const ctrl = new AbortController();
+      nearCtrl.current = ctrl;
+      try {
+        const res = await fetch(`/api/restrictions?mode=nearby&lat=${lat}&lon=${lng}&r=40`, { signal: ctrl.signal });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        nearCache.current.set(key, data);
+        render(data);
+      } catch (e) {
+        if ((e as Error).name !== "AbortError") setNear({ status: "error", label, truck: 0, rest: 0, services: 0, msg: (e as Error).message || "Betöltési hiba" });
+      }
+    }, 200);
+  }, []);
   const [menu, setMenu] = useState<{ x: number; y: number; lat: number; lon: number } | null>(null);
   const stopMarkers = useRef<Marker[]>([]);
   const rawRestr = useRef<GeoJSON.FeatureCollection>(EMPTY);
@@ -128,6 +184,7 @@ export default function MapView({
     vehicleRef.current = vehicle;
     drawRef.current = { drawMode, circleKm, onDrawDone, onDrawCancel };
     previewRef.current = onRoutePreview;
+    scheduleHideNear.current = scheduleHide;
   });
 
   // init
@@ -157,7 +214,7 @@ export default function MapView({
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
     map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left");
     map.on("load", () => {
-      for (const id of ["zones", "alt", "main", "toll", "ferry", "hl", "restr", "park", "drag", "handle", "draw"]) map.addSource(id, { type: "geojson", data: EMPTY });
+      for (const id of ["zones", "alt", "main", "toll", "ferry", "hl", "restr", "park", "near", "ring", "drag", "handle", "draw"]) map.addSource(id, { type: "geojson", data: EMPTY });
       map.addLayer({ id: "zones-fill", type: "fill", source: "zones", paint: { "fill-color": "#dc2626", "fill-opacity": 0.1 } });
       map.addLayer({ id: "zones-line", type: "line", source: "zones", paint: { "line-color": "#dc2626", "line-width": 2, "line-dasharray": [2, 1.5], "line-opacity": 0.8 } });
       map.addLayer({ id: "alt-line", type: "line", source: "alt", layout: { "line-cap": "round", "line-join": "round" },
@@ -190,6 +247,41 @@ export default function MapView({
         paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 4, 14, 9], "circle-color": "#1d4ed8", "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 } });
       map.addLayer({ id: "park-label", type: "symbol", source: "park", minzoom: 9,
         layout: { "text-field": "P", "text-size": 11, "text-allow-overlap": true }, paint: { "text-color": "#ffffff" } });
+      // a megálló (☕ / 🌙) fölé víve: a 40 km-es körzet összes kamionparkolója és pihenőhelye
+      map.addLayer({ id: "ring-fill", type: "fill", source: "ring", paint: { "fill-color": "#7c5cf5", "fill-opacity": 0.06 } });
+      map.addLayer({ id: "ring-line", type: "line", source: "ring", paint: { "line-color": "#7c5cf5", "line-width": 2, "line-dasharray": [2, 2], "line-opacity": 0.8 } });
+      map.addLayer({ id: "near-circle", type: "circle", source: "near",
+        paint: {
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 5, 5, 10, 8, 14, 11],
+          "circle-color": ["match", ["get", "kind"], "truck", "#1d4ed8", "rest", "#16a34a", "#ea580c"],
+          "circle-stroke-color": "#fff", "circle-stroke-width": 2,
+        } });
+      map.addLayer({ id: "near-label", type: "symbol", source: "near",
+        layout: { "text-field": ["match", ["get", "kind"], "truck", "P", "rest", "R", "S"], "text-size": 11, "text-allow-overlap": true },
+        paint: { "text-color": "#ffffff" } });
+      const nearPopup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12, maxWidth: "260px" });
+      map.on("mouseenter", "near-circle", (e) => {
+        map.getCanvas().style.cursor = "pointer";
+        nearHover.current = true;
+        clearTimeout(nearTimer.current);
+        const f = e.features?.[0];
+        if (!f) return;
+        const p = f.properties ?? {};
+        const esc = (x: unknown) => String(x ?? "").replace(/[<>&]/g, "");
+        const kind = p.kind === "truck" ? "🚛 Kamionparkoló" : p.kind === "rest" ? "🌿 Pihenőhely" : "⛽ Szolgáltató terület";
+        const yn = (v: unknown) => (v === "yes" ? "igen" : v === "no" ? "nem" : esc(v));
+        nearPopup.setLngLat((f.geometry as GeoJSON.Point).coordinates as [number, number]).setHTML(
+          `<div style="font:13px system-ui;line-height:1.45"><div style="font-size:11px;color:#6b6585;font-weight:700">${kind}</div><b>${esc(p.name)}</b>`
+          + `<br/>${esc(p.distKm)} km a megállótól`
+          + `${p.capacity ? `<br/>Kamionhelyek: ${esc(p.capacity)}` : ""}${p.fee ? `<br/>Díj: ${yn(p.fee)}` : ""}${p.supervised ? `<br/>Őrzött: ${yn(p.supervised)}` : ""}${p.toilets ? `<br/>WC: ${yn(p.toilets)}` : ""}${p.fuel ? `<br/>Diesel: ${yn(p.fuel)}` : ""}${p.operator ? `<br/>${esc(p.operator)}` : ""}</div>`,
+        ).addTo(map);
+      });
+      map.on("mouseleave", "near-circle", () => {
+        map.getCanvas().style.cursor = "";
+        nearHover.current = false;
+        nearPopup.remove();
+        scheduleHideNear.current();
+      });
       map.on("click", "park-circle", (e) => {
         const f = e.features?.[0];
         if (!f) return;
@@ -551,6 +643,7 @@ export default function MapView({
     if (!map || !ready) return;
     stopMarkers.current.forEach((m) => m.remove());
     stopMarkers.current = [];
+    scheduleHide(); // a megszűnt jelölő fölötti kártya ne ragadjon be
     const route = routes[selected];
     if (!route) return;
     const cum = cumulative(route.geometry);
@@ -568,6 +661,10 @@ export default function MapView({
       d.title = `${st.kind === "rest" ? "Napi pihenő" : "45 perc szünet"}${st.place ? ` – ${st.place}` : ""} – ${st.day}. nap, ~${Math.round(st.km)}. km – húzd bárhová: az útvonal mentén vagy egy másik városba`;
       d.style.cssText = `font-size:15px;width:28px;height:28px;border-radius:50%;background:#fff;border:2px solid ${st.warn ? "#dc2626" : "#334155"};display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.45);cursor:grab`;
       const mk = new maplibregl.Marker({ element: d, draggable: true }).setLngLat([st.lon, st.lat]).addTo(map);
+      const what = st.kind === "rest" ? "Napi pihenő" : "45 perc szünet";
+      d.addEventListener("mouseenter", () => { const ll = mk.getLngLat(); showNear(ll.lng, ll.lat, `${what}${st.place ? ` – ${st.place}` : ""}`); });
+      d.addEventListener("mouseleave", scheduleHide);
+      mk.on("dragstart", hideNear);
       // szabadon húzható: az útvonal közelében az útvonal mentén mozog, távol új köztes pont lesz
       mk.on("dragend", () => {
         const ll = mk.getLngLat();
@@ -577,7 +674,7 @@ export default function MapView({
       });
       stopMarkers.current.push(mk);
     }
-  }, [routes, selected, ready]);
+  }, [routes, selected, ready, showNear, hideNear, scheduleHide]);
 
   // kamionparkolók / pihenők
   useEffect(() => {
@@ -714,6 +811,28 @@ export default function MapView({
         <div className="absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-slate-900/90 px-4 py-2 text-sm text-white shadow">
           {pickMode === -1 ? "Kattints pontosan a határátkelőre (a határon átmenő útra)" : "Kattints a térképen a pont kijelöléséhez"}
           {onPickCancel && <button className="ml-2 rounded-full bg-white/15 px-2.5 py-0.5 text-xs" onClick={onPickCancel}>Mégse</button>}
+        </div>
+      )}
+      {near && (
+        <div className="pointer-events-none absolute left-3 top-24 z-10 w-[min(92%,300px)] rounded-2xl border border-violet-200 bg-white/95 p-3.5 text-slate-700 shadow-xl shadow-violet-900/15 backdrop-blur sm:top-3 sm:left-auto sm:right-14">
+          <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-violet-600">Pihenési lehetőségek · 40 km</div>
+          <div className="mt-0.5 truncate text-[13px] font-bold text-slate-900">{near.label}</div>
+          {near.status === "loading" && <div className="mt-2 flex items-center gap-2 text-xs text-slate-500"><span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />Keresés…</div>}
+          {near.status === "error" && <div className="mt-2 text-xs text-rose-600">{near.msg}</div>}
+          {near.status === "ok" && (
+            <>
+              <div className="mt-2 grid grid-cols-3 gap-1.5 text-center">
+                {[["#1d4ed8", "P", near.truck, "kamion-parkoló"], ["#16a34a", "R", near.rest, "pihenőhely"], ["#ea580c", "S", near.services, "szolgáltató"]].map(([c, l, n, t]) => (
+                  <div key={String(l)} className="rounded-xl bg-slate-50 px-1 py-1.5">
+                    <span className="mx-auto flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: String(c) }}>{l}</span>
+                    <div className="mt-1 text-[17px] font-extrabold tabular-nums leading-none">{n}</div>
+                    <div className="mt-0.5 text-[9.5px] font-semibold text-slate-500">{t}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 text-[10.5px] leading-snug text-slate-500">{near.truck + near.rest + near.services ? "Vidd az egeret egy pont fölé a részletekhez." : "Ebben a körzetben nincs adat az OSM-ben."}</div>
+            </>
+          )}
         </div>
       )}
       {showRestrictions && restrStatus && (
