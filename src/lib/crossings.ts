@@ -12,6 +12,17 @@ import { COUNTRY_NAMES } from "./country-names";
  */
 export const BUILTIN_CROSSINGS: BorderCrossing[] = [
   {
+    id: "builtin-sk-kittsee",
+    name: "Pozsony – Kittsee (D4/A6, Jarovce)",
+    lat: 48.0711,
+    lon: 17.0728,
+    countries: ["SK", "AT"],
+    requireIn: ["SK"],
+    mode: "any",
+    radiusM: 250,
+    note: "A pozsonyi (D2/D4) átkelő korlátozott utakat érint – átmenő fuvarnál a Hegyeshalom–Nickelsdorf (M1/A4) átkelő az ideális. Csak szlovákiai fel-/lerakás esetén használjuk.",
+  },
+  {
     id: "builtin-at-fernpass",
     name: "Fernpass (B179, Ausztria)",
     lat: 47.3604,
