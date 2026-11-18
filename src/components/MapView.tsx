@@ -140,7 +140,8 @@ export default function MapView({
         sources: {
           osm: {
             type: "raster",
-            tiles: [`${window.location.origin}/api/tiles/{z}/{x}/{y}`],
+            // közvetlenül az OSM CDN-ről (nincs szerverless-kerülő, böngésző-cache)
+            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
             tileSize: 256,
             maxzoom: 19,
             attribution: "© OpenStreetMap contributors",
