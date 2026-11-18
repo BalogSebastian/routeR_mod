@@ -48,6 +48,7 @@ export interface ITrip {
   vehicle: Record<string, unknown>;
   options: Record<string, unknown>;
   summary: ITripSummary;
+  favorite?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -87,6 +88,7 @@ const tripSchema = new Schema<ITrip>(
     vehicle: { type: Schema.Types.Mixed, default: {} },
     options: { type: Schema.Types.Mixed, default: {} },
     summary: { type: Schema.Types.Mixed, required: true },
+    favorite: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

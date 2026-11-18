@@ -9,6 +9,7 @@ export interface TripListItem {
   summary: { distanceKm: number; roadKm: number; tollEur: number; totalEur: number; drivingMin: number; days: number; arrival: string; countries: string[]; roads: string[] };
   from: string;
   to: string;
+  favorite?: boolean;
 }
 
 const short = (l: string) => l.split(/[—,]/)[0].trim();
@@ -31,7 +32,7 @@ export default function TripCard({ t }: { t: TripListItem }) {
       <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-500 via-indigo-500 to-violet-400 opacity-0 transition group-hover:opacity-100" />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="truncate text-[16px] font-extrabold tracking-tight text-slate-900">{t.name}</div>
+          <div className="flex items-center gap-1.5 truncate text-[16px] font-extrabold tracking-tight text-slate-900">{t.favorite && <span className="text-amber-500" title="Kedvenc">★</span>}<span className="truncate">{t.name}</span></div>
           <div className="mt-2 flex items-center gap-2 text-[12.5px] font-medium text-slate-500">
             <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" /><span className="truncate">{t.from}</span>
             <span className="h-px w-4 shrink-0 bg-slate-300" />

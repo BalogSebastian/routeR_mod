@@ -6,7 +6,7 @@ export async function GET() {
   try {
     const u = await requireActive();
     const { Trip } = await getDb();
-    const trips = await Trip.find({ userId: u._id }).sort({ updatedAt: -1 }).limit(200).select("name summary waypoints createdAt updatedAt").lean();
+    const trips = await Trip.find({ userId: u._id }).sort({ updatedAt: -1 }).limit(200).select("name summary waypoints favorite createdAt updatedAt").lean();
     return Response.json({ trips });
   } catch (e) {
     return apiError(e);

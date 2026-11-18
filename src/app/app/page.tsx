@@ -8,7 +8,7 @@ export default async function Dashboard() {
   const u = (await getUser())!;
   const { Trip, Settings } = await getDb();
   const [recent, agg, settings, history] = await Promise.all([
-    Trip.find({ userId: u._id }).sort({ updatedAt: -1 }).limit(6).select("name summary waypoints updatedAt").lean(),
+    Trip.find({ userId: u._id }).sort({ favorite: -1, updatedAt: -1 }).limit(6).select("name summary waypoints favorite updatedAt").lean(),
     Trip.aggregate<{ n: number; km: number; eur: number; toll: number }>([
       { $match: { userId: u._id } },
       { $group: { _id: null, n: { $sum: 1 }, km: { $sum: "$summary.roadKm" }, eur: { $avg: "$summary.totalEur" }, toll: { $sum: "$summary.tollEur" } } },
@@ -40,7 +40,7 @@ export default async function Dashboard() {
   const fleet = ((settings?.data?.fleet as { id: string; name: string; v: { weight: number; height: number } }[] | undefined) ?? []);
   const defId = settings?.data?.defaultFleet as string | undefined;
   const trips: TripListItem[] = recent.map((t) => ({
-    id: String(t._id), name: t.name, updatedAt: new Date(t.updatedAt).toISOString(), summary: t.summary, ...tripEnds(t.waypoints),
+    id: String(t._id), name: t.name, updatedAt: new Date(t.updatedAt).toISOString(), summary: t.summary, favorite: !!t.favorite, ...tripEnds(t.waypoints),
   }));
   const first = u.name.split(" ")[0];
   const stats = [
@@ -128,7 +128,7 @@ export default async function Dashboard() {
       <div className="grid gap-8 lg:grid-cols-[1fr_330px]">
         <section>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-[18px] font-extrabold tracking-tight text-slate-900">Legutóbbi fuvarok</h2>
+            <h2 className="text-[18px] font-extrabold tracking-tight text-slate-900">Kedvencek és legutóbbi fuvarok</h2>
             {a.n > 6 && <Link href="/app/trips" className="rounded-full bg-violet-50 px-3.5 py-1.5 text-[13px] font-bold text-violet-700 transition hover:bg-violet-100">Mind ({a.n}) →</Link>}
           </div>
           {trips.length ? (
