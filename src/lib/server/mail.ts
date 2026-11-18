@@ -1,7 +1,12 @@
 import nodemailer from "nodemailer";
 import { getDb } from "./models";
 
-const site = () => (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+/** az e-mailekben lévő linkek alapcíme: mindig a publikus cím, soha nem localhost */
+const PUBLIC_URL = "https://router-by-tesotter.vercel.app";
+const site = () => {
+  const v = (process.env.SITE_URL ?? "").trim().replace(/\/$/, "");
+  return /^https:\/\//.test(v) && !/localhost|127\.0\.0\.1/.test(v) ? v : PUBLIC_URL;
+};
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
 function transport() {
