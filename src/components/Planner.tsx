@@ -1,7 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { memo, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Results from "./Results";
 import { Logo } from "./Brand";
 import WaypointInput from "./WaypointInput";
@@ -15,7 +16,7 @@ import LogoutButton from "./app/LogoutButton";
 import { BUILTIN_CROSSINGS, MODE_LABEL } from "@/lib/crossings";
 import type { BorderCrossing, CargoKind, CostInputs, EuroClass, FerryOverride, LngLat, NoGo, RouteOptions, RouteResult, Vehicle, Waypoint } from "@/lib/types";
 
-const MapView = dynamic(() => import("./MapView"), {
+const MapView = dynamic(() => import("./MapView").then((m) => ({ default: memo(m.default) })), {
   ssr: false,
   loading: () => <div className="flex h-full items-center justify-center text-slate-500">Térkép betöltése…</div>,
 });
@@ -66,6 +67,17 @@ const RAIL = [
   { href: "/app/trips", label: "Fuvaraim", icon: "M4 6h16M4 12h16M4 18h10", active: false },
   { href: "/app/settings", label: "Fiók", icon: "M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6", active: false },
 ];
+const NONE: BorderCrossing[] = [];
+const NONE_IDS: string[] = [];
+
+/** állandó azonosságú függvény, amely mindig a legfrissebb állapotot látja – így a memo-zott gyerekek nem renderelnek újra feleslegesen */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function useStable<A extends any[], R>(fn: (...a: A) => R): (...a: A) => R {
+  const ref = useRef(fn);
+  useLayoutEffect(() => { ref.current = fn; });
+  return useCallback((...a: A) => ref.current(...a), []);
+}
+
 const uid = () => Math.random().toString(36).slice(2, 9);
 
 interface Recent { label: string; waypoints: Waypoint[] }
@@ -144,11 +156,11 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
   const [routeWps, setRouteWps] = useState<Waypoint[]>([]);
 
   // a beállítások a felhasználó fiókjába mentődnek (késleltetve)
-  const settingsPayload = JSON.stringify({
+  const settingsPayload = useMemo(() => JSON.stringify({
     vehicle, costs, fleet, defaultFleet,
     noGo: options.noGo, ferryOverrides: options.ferryOverrides, flexRules: options.flexRules, waitBans: options.waitBans,
     crossings: options.crossings, crossingsOff: options.crossingsOff, chDefault: true,
-  } satisfies Saved);
+  } satisfies Saved), [vehicle, costs, fleet, defaultFleet, options.noGo, options.ferryOverrides, options.flexRules, options.waitBans, options.crossings, options.crossingsOff]);
   const lastSettings = useRef(settingsPayload);
   useEffect(() => {
     if (lastSettings.current === settingsPayload) return;
@@ -260,9 +272,12 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
   }, []);
 
   const sched = useMemo(() => ({ departure: options.departure, flexRules: options.flexRules, waitBans: options.waitBans }), [options.departure, options.flexRules, options.waitBans]);
+  // gépelés közben a költség-újraszámolás nem akasztja meg a beviteli mezőket
+  const dWeight = useDeferredValue(vehicle.weight);
+  const dCosts = useDeferredValue(costs);
   const routes = useMemo(
-    () => rawRoutes.map((r, i) => applyPlan(r, plans[i] ?? autoPlan(r, sched, vehicle.weight), sched, vehicle.weight, costs)),
-    [rawRoutes, plans, sched, vehicle.weight, costs],
+    () => rawRoutes.map((r, i) => applyPlan(r, plans[i] ?? autoPlan(r, sched, dWeight), sched, dWeight, dCosts)),
+    [rawRoutes, plans, sched, dWeight, dCosts],
   );
   const currentPlan = (): PlanStop[] => plans[selected] ?? (rawRoutes[selected] ? autoPlan(rawRoutes[selected], sched, vehicle.weight) : []);
   const setPlan = (p: PlanStop[]) => setPlans((all) => ({ ...all, [selected]: p }));
@@ -432,8 +447,8 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
   }, [noGoKey]);
 
   // --- feltételes határátkelők ---
-  const crossings = options.crossings ?? [];
-  const crossingsOff = options.crossingsOff ?? [];
+  const crossings = options.crossings ?? NONE;
+  const crossingsOff = options.crossingsOff ?? NONE_IDS;
   const setCrossing = (id: string, p: Partial<BorderCrossing>) => setOptions((o) => ({ ...o, crossings: (o.crossings ?? []).map((c) => (c.id === id ? { ...c, ...p } : c)) }));
   const removeCrossing = (id: string) => setOptions((o) => ({ ...o, crossings: (o.crossings ?? []).filter((c) => c.id !== id) }));
   const toggleBuiltin = (id: string) => setOptions((o) => ({ ...o, crossingsOff: (o.crossingsOff ?? []).includes(id) ? (o.crossingsOff ?? []).filter((x) => x !== id) : [...(o.crossingsOff ?? []), id] }));
@@ -550,6 +565,25 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
 
   const best = routes[selected];
 
+  // stabil kezelők a memo-zott térképnek / eredmény-panelnek
+  const sOnStopMove = useStable(onStopMove);
+  const sOnStopDrop = useStable(onStopDrop);
+  const sOnWaypointDrag = useStable(onWaypointDrag);
+  const sOnRouteDrag = useStable(onRouteDrag);
+  const sOnWaypointRemove = useStable(onWaypointRemove);
+  const sOnDrawDone = useStable(onDrawDone);
+  const sOnDrawCancel = useStable(() => setDrawMode(null));
+  const sOnPickCancel = useStable(() => { setPickIdx(null); setCrossPick(false); });
+  const sOnAddStop = useStable(onAddStop);
+  const sOnRemoveStop = useStable(onRemoveStop);
+  const sOnResetStops = useStable(onResetStops);
+  const sOnSnapParking = useStable(onSnapParking);
+  const sOnSectionFocus = useStable((i: number) => setZoomSection({ i, t: Date.now() }));
+  const mapCrossings = useMemo(
+    () => [...BUILTIN_CROSSINGS.filter((c) => !crossingsOff.includes(c.id)), ...crossings.filter((c) => !c.disabled)],
+    [crossings, crossingsOff],
+  );
+
   /** a kiszámolt fuvar mentése a fiókba (új vagy a megnyitott frissítése) */
   const saveTrip = async () => {
     if (!best || !routeWps.length) return;
@@ -593,11 +627,11 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
   return (
     <div className="flex h-dvh w-full flex-col md:flex-row">
       <nav className="hidden w-[68px] shrink-0 flex-col items-center gap-1.5 border-r border-slate-200 bg-white py-4 md:flex">
-        <a href="/app" title="routeR – irányítópult" className="mb-4"><Logo className="h-9 w-9" /></a>
+        <Link href="/app" title="routeR – irányítópult" className="mb-4"><Logo className="h-9 w-9" /></Link>
         {RAIL.map((n) => (
-          <a key={n.href} href={n.href} title={n.label} className={`flex h-11 w-11 items-center justify-center rounded-xl transition ${n.active ? "bg-violet-50 text-violet-700" : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"}`}>
+          <Link key={n.href} href={n.href} title={n.label} className={`flex h-11 w-11 items-center justify-center rounded-xl transition ${n.active ? "bg-violet-50 text-violet-700" : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"}`}>
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={n.icon} /></svg>
-          </a>
+          </Link>
         ))}
         <LogoutButton className="mt-auto flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-rose-600">
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /></svg>
@@ -606,14 +640,14 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
       <aside className={`z-10 flex w-full flex-col bg-slate-50 shadow-2xl shadow-violet-900/10 md:w-[460px] md:shrink-0 dark:bg-slate-950 ${panelOpen ? "h-[64dvh] md:h-full" : "h-[68px] md:h-full"}`}>
         <header className="relative shrink-0 border-b border-slate-200 bg-white px-4 py-3">
           <div className="relative flex items-center gap-3">
-            <a href="/app" className="flex min-w-0 flex-1 items-center gap-2.5" title="Vissza az irányítópultra">
+            <Link href="/app" className="flex min-w-0 flex-1 items-center gap-2.5" title="Vissza az irányítópultra">
               <span className="md:hidden"><Logo /></span>
               <div className="min-w-0">
                 <h1 className="brand-word truncate text-[20px] leading-none text-slate-900">route<b className="text-violet-600">R</b> <span className="text-[11px] font-medium tracking-[0.14em] text-slate-400">BY TESOTTER</span></h1>
                 <p className="mt-1 truncate text-[11px] text-slate-500">{tripName ? `📁 ${tripName}` : "Új útvonal · útdíj · fuvarköltség"}</p>
               </div>
-            </a>
-            <a href="/app" className="btn !px-2.5 !py-1.5 text-xs md:hidden">← Irányítópult</a>
+            </Link>
+            <Link href="/app" className="btn !px-2.5 !py-1.5 text-xs md:hidden">← Irányítópult</Link>
             <button className="btn !px-2.5 !py-1.5 text-xs md:hidden" onClick={() => setPanelOpen((o) => !o)}>
               {panelOpen ? "Térkép ▾" : "Panel ▴"}
             </button>
@@ -906,7 +940,7 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
               <button className="btn w-full" onClick={share}>
                 <Ico name="link" /> {copied ? "Link a vágólapon ✓" : "Megosztható link másolása"}
               </button>
-              <Results routes={routes} selected={selected} onSelect={setSelected} costs={costs} onAddStop={onAddStop} onRemoveStop={onRemoveStop} onResetStops={onResetStops} edited={!!plans[selected]} onSnapParking={onSnapParking} parkStatus={parkStatus} waypoints={routeWps} departure={options.departure} activeSection={hlSection} onSectionHover={setHlSection} onSectionFocus={(i) => setZoomSection({ i, t: Date.now() })} />
+              <Results routes={routes} selected={selected} onSelect={setSelected} costs={costs} onAddStop={sOnAddStop} onRemoveStop={sOnRemoveStop} onResetStops={sOnResetStops} edited={!!plans[selected]} onSnapParking={sOnSnapParking} parkStatus={parkStatus} waypoints={routeWps} departure={options.departure} activeSection={hlSection} onSectionHover={setHlSection} onSectionFocus={sOnSectionFocus} />
             </>
           )}
 
@@ -966,25 +1000,25 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
           pickMode={pickIdx ?? (crossPick ? -1 : null)}
           onPick={onPick}
           onSelectRoute={setSelected}
-          onStopMove={onStopMove}
-          onStopDrop={onStopDrop}
-          onWaypointDrag={onWaypointDrag}
-          onRouteDrag={onRouteDrag}
-          onWaypointRemove={onWaypointRemove}
+          onStopMove={sOnStopMove}
+          onStopDrop={sOnStopDrop}
+          onWaypointDrag={sOnWaypointDrag}
+          onRouteDrag={sOnRouteDrag}
+          onWaypointRemove={sOnWaypointRemove}
           keepView={keepView}
           zoneCountries={noGo.countries}
           zoneAreas={noGo.areas}
           drawMode={drawMode}
           circleKm={circleKm}
-          onDrawDone={onDrawDone}
-          onDrawCancel={() => setDrawMode(null)}
+          onDrawDone={sOnDrawDone}
+          onDrawCancel={sOnDrawCancel}
           onRoutePreview={onRoutePreview}
-          crossings={[...BUILTIN_CROSSINGS.filter((c) => !crossingsOff.includes(c.id)), ...crossings.filter((c) => !c.disabled)]}
+          crossings={mapCrossings}
           crossStatus={crossStatus}
           focus={focus}
           highlightSection={hlSection}
           zoomSection={zoomSection}
-          onPickCancel={() => { setPickIdx(null); setCrossPick(false); }}
+          onPickCancel={sOnPickCancel}
         />
       </main>
     </div>

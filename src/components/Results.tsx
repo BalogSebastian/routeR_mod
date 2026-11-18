@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { COUNTRY_NAMES } from "@/lib/country-names";
 import { dt, dur, eur, eur2, flag, huf, km } from "@/lib/format";
 import type { CostInputs, RouteResult, Waypoint } from "@/lib/types";
@@ -69,7 +69,7 @@ function csv(r: RouteResult, c: CostInputs) {
 
 const KIND: Record<string, string> = { break: "☕ 45 perc szünet", rest: "🌙 Napi pihenő", wait: "⏳ Várakozás", ferry: "⛴ Komp / vasút" };
 
-export default function Results({ routes, selected, onSelect, costs, onAddStop, onRemoveStop, onResetStops, edited, onSnapParking, parkStatus, waypoints, departure, activeSection, onSectionHover, onSectionFocus }: Props) {
+function Results({ routes, selected, onSelect, costs, onAddStop, onRemoveStop, onResetStops, edited, onSnapParking, parkStatus, waypoints, departure, activeSection, onSectionHover, onSectionFocus }: Props) {
   const [showSteps, setShowSteps] = useState(false);
   const [margin, setMargin] = useState(15);
   const [roundTrip, setRoundTrip] = useState(false);
@@ -381,3 +381,5 @@ function Stat({ k, v, wide }: { k: string; v: string; wide?: boolean }) {
     </div>
   );
 }
+
+export default memo(Results);

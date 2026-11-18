@@ -157,3 +157,31 @@ details > summary::-webkit-details-marker { display: none; }
     radial-gradient(50% 45% at 100% 100%, rgb(221 214 254 / 0.55), transparent 70%),
     #faf8ff;
 }
+
+/* ---------- sofőr-oldal ---------- */
+.driver-root {
+  font-family: var(--font-driver), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "tnum" 1, "cv11" 1;
+  letter-spacing: -0.005em;
+}
+.driver-hero {
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(167, 139, 250, 0.55) 0%, transparent 55%),
+    radial-gradient(90% 70% at 0% 100%, rgba(99, 64, 222, 0.6) 0%, transparent 60%),
+    linear-gradient(160deg, #4a2bd6 0%, #34199a 55%, #1f0f5c 100%);
+}
+.driver-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+  background-size: 18px 18px;
+  mask-image: linear-gradient(180deg, #000 0%, transparent 85%);
+  pointer-events: none;
+}
+.driver-cta {
+  background: linear-gradient(135deg, #7c5cff 0%, #5b3bdb 100%);
+  box-shadow: 0 14px 30px -10px rgba(91, 59, 219, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+@keyframes driver-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.driver-in { animation: driver-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }

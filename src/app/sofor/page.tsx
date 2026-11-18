@@ -1,5 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import DriverLoader from "@/components/DriverLoader";
+
+// a sofőr-oldal saját, jól olvasható, modern betűtípust kap (napfényben, mobilon is)
+const driverFont = Plus_Jakarta_Sans({ variable: "--font-driver", subsets: ["latin", "latin-ext"], display: "swap" });
 
 export const metadata: Metadata = {
   title: "Útvonal a sofőrnek – routeR by tesotter",
@@ -7,6 +11,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#3b1fa8" };
+
 export default function DriverPage() {
-  return <DriverLoader />;
+  return (
+    <div className={`${driverFont.variable} driver-root`}>
+      <DriverLoader />
+    </div>
+  );
 }
