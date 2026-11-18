@@ -21,7 +21,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     // tiltás / visszaminősítés: a meglévő munkamenetek érvénytelenek
     if (input.status === "blocked" || input.status === "pending" || input.role) update.$inc = { sessionVersion: 1 };
     await User.updateOne({ _id: id }, update);
-    if (input.status === "active" && before.status !== "active") void sendApproved(before.email, before.name);
+    if (input.status === "active" && before.status !== "active") await sendApproved(before.email, before.name);
     return Response.json({ ok: true });
   } catch (e) {
     return apiError(e);

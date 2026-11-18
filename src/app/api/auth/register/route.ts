@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       passwordHash: await hashPassword(input.password), role: "user", status: "pending",
     });
     await startSession(user.toObject());
-    void notifyAdminNewUser({ name: input.name, email: input.email, company: input.company });
+    await notifyAdminNewUser({ name: input.name, email: input.email, company: input.company });
     return Response.json({ ok: true, status: "pending" });
   } catch (e) {
     if ((e as { code?: number }).code === 11000) return Response.json({ error: "Ezzel az e-mail címmel már van fiók." }, { status: 409 });

@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { getDb } from "./models";
 
 const site = () => (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
@@ -19,18 +20,30 @@ ${cta ? `<a href="${cta.href}" style="display:inline-block;margin-top:22px;backg
 
 export interface SendResult { ok: boolean; error?: string; accepted?: string[]; response?: string }
 
+async function log(to: string, subject: string, r: SendResult) {
+  try {
+    const { MailLog } = await getDb();
+    await MailLog.create({ to, subject, ok: r.ok, error: r.error, response: r.response });
+  } catch { /* a naplózás hibája ne akassza meg a küldést */ }
+}
+
 async function send(to: string, subject: string, html: string): Promise<SendResult> {
   const t = transport();
-  if (!t) return { ok: false, error: "Az EMAIL_USER / EMAIL_PASS nincs beállítva a szerveren." };
-  try {
-    const r = await t.sendMail({ from: `"routeR by tesotter" <${process.env.EMAIL_USER}>`, to, subject, html });
-    if (!r.accepted?.length) return { ok: false, error: `A levelet a szerver nem fogadta el: ${r.rejected?.join(", ") ?? "ismeretlen ok"}`, response: r.response };
-    return { ok: true, accepted: r.accepted as string[], response: r.response };
-  } catch (e) {
-    const msg = (e as Error).message;
-    console.error("E-mail küldési hiba:", msg);
-    return { ok: false, error: msg };
+  let res: SendResult;
+  if (!t) res = { ok: false, error: "Az EMAIL_USER / EMAIL_PASS nincs beállítva a szerveren." };
+  else {
+    try {
+      const r = await t.sendMail({ from: `"routeR by tesotter" <${process.env.EMAIL_USER}>`, to, subject, html });
+      res = r.accepted?.length
+        ? { ok: true, accepted: r.accepted as string[], response: r.response }
+        : { ok: false, error: `A levelet a szerver nem fogadta el: ${r.rejected?.join(", ") ?? "ismeretlen ok"}`, response: r.response };
+    } catch (e) {
+      console.error("E-mail küldési hiba:", (e as Error).message);
+      res = { ok: false, error: (e as Error).message };
+    }
   }
+  await log(to, subject, res);
+  return res;
 }
 
 /** admin: teszt-levél a saját címre (a hibaüzenet visszajön) */

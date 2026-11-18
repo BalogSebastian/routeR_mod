@@ -54,6 +54,8 @@ export interface ITrip {
 
 export interface IResetToken { _id: Types.ObjectId; userId: Types.ObjectId; tokenHash: string; expiresAt: Date }
 
+export interface IMailLog { _id: Types.ObjectId; to: string; subject: string; ok: boolean; error?: string; response?: string; at: Date }
+
 export interface IRateLimit { _id: string; count: number; expiresAt: Date }
 
 const userSchema = new Schema<IUser>(
@@ -101,7 +103,13 @@ const resetSchema = new Schema<IResetToken>({
   expiresAt: { type: Date, required: true, expires: 0 },
 });
 
+const mailLogSchema = new Schema<IMailLog>({
+  to: String, subject: String, ok: Boolean, error: String, response: String,
+  at: { type: Date, default: Date.now, expires: 60 * 60 * 24 * 30 },
+});
+
 export interface Db {
+  MailLog: Model<IMailLog>;
   ResetToken: Model<IResetToken>;
   User: Model<IUser>;
   Settings: Model<ISettings>;
@@ -114,6 +122,7 @@ export async function getDb(): Promise<Db> {
   if (models) return models;
   const c = await connect();
   models = {
+    MailLog: (c.models.MailLog as Model<IMailLog>) ?? c.model<IMailLog>("MailLog", mailLogSchema, "maillog"),
     ResetToken: (c.models.ResetToken as Model<IResetToken>) ?? c.model<IResetToken>("ResetToken", resetSchema, "resettokens"),
     User: (c.models.User as Model<IUser>) ?? c.model<IUser>("User", userSchema, "users"),
     Settings: (c.models.Settings as Model<ISettings>) ?? c.model<ISettings>("Settings", settingsSchema, "settings"),
