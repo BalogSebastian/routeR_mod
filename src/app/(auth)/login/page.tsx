@@ -40,7 +40,7 @@ export default function LoginPage() {
           <input className="input-lg" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="te@ceged.hu" />
         </label>
         <label className="block">
-          <span className="label-xs">Jelszó</span>
+          <span className="label-xs flex items-center justify-between"><span>Jelszó</span><Link href="/forgot" className="normal-case tracking-normal font-medium text-violet-600 hover:text-violet-700">Elfelejtetted?</Link></span>
           <input className="input-lg" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
         </label>
         <button className="btn-primary w-full !py-3" disabled={busy || !email || !password}>{busy ? "Belépés…" : "Belépés"}</button>

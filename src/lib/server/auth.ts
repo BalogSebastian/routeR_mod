@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { createHash } from "node:crypto";
 import { getIronSession, type SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
 import { z } from "zod";
@@ -81,3 +82,5 @@ export function apiError(e: unknown): Response {
   console.error(e);
   return Response.json({ error: "Váratlan szerverhiba." }, { status: 500 });
 }
+
+export const hashToken = (t: string) => createHash("sha256").update(t).digest("hex");

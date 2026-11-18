@@ -52,6 +52,8 @@ export interface ITrip {
   updatedAt: Date;
 }
 
+export interface IResetToken { _id: Types.ObjectId; userId: Types.ObjectId; tokenHash: string; expiresAt: Date }
+
 export interface IRateLimit { _id: string; count: number; expiresAt: Date }
 
 const userSchema = new Schema<IUser>(
@@ -93,7 +95,14 @@ const rateSchema = new Schema<IRateLimit>({
   expiresAt: { type: Date, expires: 0 },
 });
 
+const resetSchema = new Schema<IResetToken>({
+  userId: { type: Schema.Types.ObjectId, required: true, index: true },
+  tokenHash: { type: String, required: true, unique: true },
+  expiresAt: { type: Date, required: true, expires: 0 },
+});
+
 export interface Db {
+  ResetToken: Model<IResetToken>;
   User: Model<IUser>;
   Settings: Model<ISettings>;
   Trip: Model<ITrip>;
@@ -105,6 +114,7 @@ export async function getDb(): Promise<Db> {
   if (models) return models;
   const c = await connect();
   models = {
+    ResetToken: (c.models.ResetToken as Model<IResetToken>) ?? c.model<IResetToken>("ResetToken", resetSchema, "resettokens"),
     User: (c.models.User as Model<IUser>) ?? c.model<IUser>("User", userSchema, "users"),
     Settings: (c.models.Settings as Model<ISettings>) ?? c.model<ISettings>("Settings", settingsSchema, "settings"),
     Trip: (c.models.Trip as Model<ITrip>) ?? c.model<ITrip>("Trip", tripSchema, "trips"),

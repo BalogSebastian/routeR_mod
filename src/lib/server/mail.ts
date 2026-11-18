@@ -46,3 +46,12 @@ export async function sendApproved(to: string, name: string) {
     { href: `${site()}/login`, label: "Belépés" },
   ));
 }
+
+/** jelszó-visszaállító link (1 óráig érvényes, egyszer használható) */
+export async function sendPasswordReset(to: string, name: string, token: string) {
+  await send(to, "[routeR] Jelszó visszaállítása", shell(
+    "Jelszó visszaállítása",
+    `Szia ${esc(name)}! Jelszó-visszaállítást kértél a routeR fiókodhoz. A link <b>1 óráig</b> érvényes és csak egyszer használható.<br/><br/>Ha nem te kérted, nyugodtan hagyd figyelmen kívül ezt a levelet.`,
+    { href: `${site()}/reset?token=${token}`, label: "Új jelszó megadása" },
+  ));
+}

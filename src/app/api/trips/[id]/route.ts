@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { apiError, requireActive } from "@/lib/server/auth";
 import { getDb, isOid } from "@/lib/server/models";
-import { tripSchema } from "../route";
+import { tripSchema } from "@/lib/server/trip-schema";
 
 type Ctx = { params: Promise<{ id: string }> };
 
