@@ -9,6 +9,7 @@ import { cumulative, pointAtFraction, snapToRoute } from "@/lib/schedule";
 import { sliceFraction } from "@/lib/sections";
 import { circleRing } from "@/lib/zones";
 import Flyover from "./Flyover";
+import type { FlyData } from "@/lib/flydata";
 
 // A worker a public/ mappából jön (a Turbopack nem tudja automatikusan becsomagolni).
 maplibregl.setWorkerUrl("/maplibre-gl-worker.mjs");
@@ -54,8 +55,7 @@ interface Props {
   /** erre a szakaszra közelítsen rá a térkép */
   zoomSection?: { i: number; t: number } | null;
   /** útvonal-lejátszás (animált végigmenés) */
-  flyover?: boolean;
-  departure?: string;
+  flyData?: FlyData | null;
   onFlyoverClose?: () => void;
 }
 
@@ -88,7 +88,7 @@ function supportsWebGL2(): boolean {
 export default function MapView({
   waypoints, routes, selected, vehicle, showRestrictions, showParking, onContext, pickMode, onPick, onSelectRoute, onStopMove, onStopDrop, onWaypointDrag, onRouteDrag, onWaypointRemove, keepView,
   zoneCountries, zoneAreas, drawMode, circleKm, onDrawDone, onDrawCancel, onRoutePreview,
-  crossings = [], crossStatus, focus, onPickCancel, highlightSection = null, zoomSection = null, flyover = false, departure = "", onFlyoverClose,
+  crossings = [], crossStatus, focus, onPickCancel, highlightSection = null, zoomSection = null, flyData = null, onFlyoverClose,
 }: Props) {
   const crossMarkers = useRef<Marker[]>([]);
   const drawRef = useRef({ drawMode, circleKm, onDrawDone, onDrawCancel });
@@ -836,9 +836,7 @@ export default function MapView({
           {onPickCancel && <button className="ml-2 rounded-full bg-white/15 px-2.5 py-0.5 text-xs" onClick={onPickCancel}>Mégse</button>}
         </div>
       )}
-      {flyover && mapInst && routes[selected] && onFlyoverClose && (
-        <Flyover key={`${selected}-${routes[selected].distanceKm}`} map={mapInst} route={routes[selected]} departure={departure} onClose={onFlyoverClose} />
-      )}
+      {flyData && mapInst && onFlyoverClose && <Flyover key={flyData.title + flyData.km} map={mapInst} data={flyData} onClose={onFlyoverClose} />}
       {near && (
         <div className="pointer-events-none absolute left-3 top-24 z-10 w-[min(92%,300px)] rounded-2xl border border-violet-200 bg-white/95 p-3.5 text-slate-700 shadow-xl shadow-violet-900/15 backdrop-blur sm:top-3 sm:left-auto sm:right-14">
           <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-violet-600">Pihenési lehetőségek · 40 km</div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { memo, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Results from "./Results";
 import { useDriverPageUrl } from "./DriverSend";
+import { flyFromRoute } from "@/lib/flydata";
 import { Logo } from "./Brand";
 import WaypointInput from "./WaypointInput";
 import { Card, Ico, Num, Toggle } from "./ui";
@@ -146,6 +147,7 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
   const [error, setError] = useState<string | null>(null);
   const [showRestr, setShowRestr] = useState(false);
   const [flyover, setFlyover] = useState(false);
+  const [videoCopied, setVideoCopied] = useState(false);
   const [pickIdx, setPickIdx] = useState<number | null>(null);
   const [panelOpen, setPanelOpen] = useState(true);
   const [keepView, setKeepView] = useState(false);
@@ -585,6 +587,12 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
   const sOnDrawDone = useStable(onDrawDone);
   const sOnDrawCancel = useStable(() => setDrawMode(null));
   const sOnPickCancel = useStable(() => { setPickIdx(null); setCrossPick(false); });
+  const flyData = useMemo(() => {
+    if (!flyover || !best) return null;
+    const ends = waypoints.filter((w): w is Waypoint => !!w && !w.via && !w.ferry);
+    const short = (l: string) => l.split(/[—,]/)[0].trim();
+    return flyFromRoute(best, `${short(ends[0]?.label ?? "Indulás")} → ${short(ends[ends.length - 1]?.label ?? "Érkezés")}`, options.departure);
+  }, [flyover, best, waypoints, options.departure]);
   const sOnFlyoverClose = useStable(() => setFlyover(false));
   const sOnAddStop = useStable(onAddStop);
   const sOnRemoveStop = useStable(onRemoveStop);
@@ -972,9 +980,16 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
             </button>
           )}
           {best && !loading && driverUrl && (
-            <a href={driverUrl} target="_blank" rel="noreferrer" className="btn mb-2 w-full !border-violet-200 !bg-violet-50 !text-violet-700 hover:!bg-violet-100">
-              🚚 Sofőr-nézet megnyitása
-            </a>
+            <div className="mb-2 grid grid-cols-2 gap-2">
+              <a href={driverUrl} target="_blank" rel="noreferrer" className="btn !border-violet-200 !bg-violet-50 !text-violet-700 hover:!bg-violet-100">🚚 Sofőr-nézet</a>
+              <button
+                className="btn !border-violet-200 !bg-violet-50 !text-violet-700 hover:!bg-violet-100"
+                onClick={async () => {
+                  const url = `${driverUrl}&play=1`;
+                  try { await navigator.clipboard.writeText(url); setVideoCopied(true); setTimeout(() => setVideoCopied(false), 2000); } catch { window.prompt("Videó-link:", url); }
+                }}
+              >{videoCopied ? "Link másolva ✓" : "🎬 Videó-link másolása"}</button>
+            </div>
           )}
           <button onClick={() => calc()} disabled={!ready || loading} className="cta">
             {loading ? (<><span className="spinner" /> Számítás… (hosszú útnál ~10–30 mp)</>) : ready ? (<><Ico name="route" className="h-[18px] w-[18px]" /> Útvonal és költség számítása</>) : "Add meg az indulást és az érkezést"}
@@ -1032,8 +1047,7 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
           highlightSection={hlSection}
           zoomSection={zoomSection}
           onPickCancel={sOnPickCancel}
-          flyover={flyover}
-          departure={options.departure}
+          flyData={flyData}
           onFlyoverClose={sOnFlyoverClose}
         />
         {best && !loading && !flyover && (

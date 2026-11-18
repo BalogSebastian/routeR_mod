@@ -1,10 +1,13 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import { CARGO_LABEL } from "@/lib/crossings";
-import { appleUrl, decodeTrip, driverGeometry, googleLinks, gpxFor, wazeUrl, type DriverTrip } from "@/lib/navlinks";
+import { appleUrl, decodeTrip, driverGeometry, flyFromDriver, googleLinks, gpxFor, wazeUrl, type DriverTrip } from "@/lib/navlinks";
 import { COUNTRY_NAMES } from "@/lib/country-names";
 import { dt, dur, flag } from "@/lib/format";
+
+const FlyPlayer = dynamic(() => import("./FlyPlayer"), { ssr: false, loading: () => <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 text-sm font-medium text-white/80">Lejátszó betöltése…</div> });
 
 const KIND: Record<string, { icon: string; label: string; tone: string }> = {
   break: { icon: "☕", label: "45 perc szünet", tone: "bg-amber-50 text-amber-700" },
@@ -28,7 +31,9 @@ function Sect({ title, children }: { title: string; children: React.ReactNode })
 /** Sofőr-oldal: mobilra, nagy gombokkal; a navigáció egy koppintással indul. */
 export default function DriverView() {
   // a komponens csak a böngészőben fut (ssr: false), ezért a hash az első rendereléskor olvasható
-  const [hash] = useState(() => window.location.hash.match(/#d=(.+)$/)?.[1] ?? "");
+  const [hash] = useState(() => window.location.hash.match(/#d=([^&]+)/)?.[1] ?? "");
+  // a „videó-link” (&play=1) rögtön elindítja a lejátszást
+  const [playing, setPlaying] = useState(() => /[#&]play=1/.test(window.location.hash));
   const key = `tesotter-driver-${hash.slice(-24)}`;
   const [trip, setTrip] = useState<DriverTrip | null>(null);
   const [err, setErr] = useState(hash ? "" : "Hiányzó útvonal – kérd újra a linket a diszpécsertől.");
@@ -42,6 +47,7 @@ export default function DriverView() {
   }, [hash]);
 
   const links = useMemo(() => (trip ? googleLinks(trip.p) : []), [trip]);
+  const fly = useMemo(() => (trip ? flyFromDriver(trip) : null), [trip]);
   const stops = trip?.p.filter((p) => p.stop) ?? [];
 
   const toggleDone = (i: number) => {
@@ -79,6 +85,7 @@ export default function DriverView() {
 
   return (
     <div className="min-h-dvh bg-slate-50 pb-12">
+      {playing && fly && <FlyPlayer data={fly} onClose={() => setPlaying(false)} />}
       <header className="driver-hero relative overflow-hidden px-5 pb-16 pt-6 text-white">
         <div className="relative z-10 mx-auto max-w-xl">
           <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-200">
@@ -134,6 +141,15 @@ export default function DriverView() {
             </div>
           ))}
           {links.length > 1 && <p className="px-1 text-[12px] leading-relaxed text-slate-500">A szakaszokat sorban nyisd meg: ha elérted egy szakasz célját, jelöld késznek, és indítsd a következőt.</p>}
+          {fly && (
+            <button onClick={() => setPlaying(true)} className="group flex w-full items-center gap-3.5 rounded-3xl border border-violet-200 bg-gradient-to-r from-violet-50 to-indigo-50 px-5 py-3.5 text-left shadow-sm transition active:scale-[0.985]">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-600 text-lg text-white shadow-md shadow-violet-600/30">🎬</span>
+              <span className="min-w-0">
+                <span className="block text-[15px] font-bold text-slate-900">Útvonal-lejátszás (videó)</span>
+                <span className="mt-0.5 block text-[12px] text-slate-500">Nézd végig előre: melyik úton, mennyivel, hol és mikor megy</span>
+              </span>
+            </button>
+          )}
           <button onClick={gpx} className="flex w-full items-center gap-3.5 rounded-3xl border border-slate-200 bg-white px-5 py-3.5 text-left shadow-sm transition active:scale-[0.985]">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-xl">🧭</span>
             <span className="min-w-0">

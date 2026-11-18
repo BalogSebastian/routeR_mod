@@ -1,6 +1,7 @@
 import { cargoOf, CARGO_LABEL } from "./crossings";
 import { COUNTRY_NAMES } from "./country-names";
 import { decodePolyline, encodePolyline } from "./polyline";
+import { compactFly, type FlyData, type FlySection, type FlyStop } from "./flydata";
 import type { CargoKind, LngLat, RouteResult, Waypoint } from "./types";
 
 /**
@@ -201,8 +202,13 @@ export interface DriverTrip {
   w: string[];
   /** komp / vasút */
   f: { name: string; from: string; to: string }[];
-  /** egyszerűsített nyomvonal (polyline, 5 tizedes) – a GPX-hez */
+  /** egyszerűsített nyomvonal (polyline, 5 tizedes) – a GPX-hez és az útvonal-lejátszáshoz */
   g: string;
+  /** útvonal-lejátszás: útszakaszok és megállók (tömör) */
+  fs?: FlySection[];
+  fst?: FlyStop[];
+  /** a vezetés napjainak száma */
+  days?: number;
 }
 
 export function driverTrip(r: RouteResult, wps: Waypoint[], points: NavPoint[], departure: string): DriverTrip {
@@ -222,8 +228,16 @@ export function driverTrip(r: RouteResult, wps: Waypoint[], points: NavPoint[], 
     s: r.stops.map((s) => ({ k: s.kind, time: s.time, km: Math.round(s.km), place: s.place, country: s.country })),
     w: warn.slice(0, 12),
     f: r.ferries.map((f) => ({ name: f.name, from: f.from, to: f.to })),
-    g: encodePolyline(simplify(r.geometry), 5),
+    g: encodePolyline(simplify(r.geometry, 0.0003, 900), 5),
+    ...compactFly(r),
+    days: r.schedule.days,
   };
+}
+
+/** a sofőr-linkből az útvonal-lejátszás adata (régi linkeknél null) */
+export function flyFromDriver(d: DriverTrip): FlyData | null {
+  if (!d.fs?.length) return null;
+  return { title: d.t, dep: d.dep, km: d.km, driveMin: d.driveMin, arr: d.arr, days: d.days ?? 1, geometry: driverGeometry(d), sections: d.fs, stops: d.fst ?? [] };
 }
 
 export function driverGeometry(d: DriverTrip): LngLat[] {
