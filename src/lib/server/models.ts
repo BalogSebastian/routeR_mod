@@ -110,7 +110,16 @@ const mailLogSchema = new Schema<IMailLog>({
   at: { type: Date, default: Date.now, expires: 60 * 60 * 24 * 30 },
 });
 
+export interface INearCache { _id: string; fc: unknown; at: Date }
+/** a megállók körüli parkolók: közös (minden felhasználónak) gyorsítótár, 21 napig él */
+const nearSchema = new Schema<INearCache>({
+  _id: String,
+  fc: Schema.Types.Mixed,
+  at: { type: Date, default: Date.now, expires: 60 * 60 * 24 * 21 },
+});
+
 export interface Db {
+  NearCache: Model<INearCache>;
   MailLog: Model<IMailLog>;
   ResetToken: Model<IResetToken>;
   User: Model<IUser>;
@@ -124,6 +133,7 @@ export async function getDb(): Promise<Db> {
   if (models) return models;
   const c = await connect();
   models = {
+    NearCache: (c.models.NearCache as Model<INearCache>) ?? c.model<INearCache>("NearCache", nearSchema, "nearcache"),
     MailLog: (c.models.MailLog as Model<IMailLog>) ?? c.model<IMailLog>("MailLog", mailLogSchema, "maillog"),
     ResetToken: (c.models.ResetToken as Model<IResetToken>) ?? c.model<IResetToken>("ResetToken", resetSchema, "resettokens"),
     User: (c.models.User as Model<IUser>) ?? c.model<IUser>("User", userSchema, "users"),

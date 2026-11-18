@@ -1,12 +1,16 @@
 import { getUser } from "@/lib/server/auth";
+import { getDb } from "@/lib/server/models";
 import type { NextRequest } from "next/server";
 
 /**
  * Kamion-korlátozások az OSM-ből (Overpass API, ingyenes).
  * Tiltott (hgv=no), súly-, magasság-, szélesség-, hosszkorlát.
  */
+export const maxDuration = 60;
+
 const ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
+  "https://overpass.openstreetmap.fr/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
 ];
@@ -41,6 +45,9 @@ export async function GET(req: NextRequest) {
     if (![lat, lon].every(Number.isFinite) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return Response.json({ error: "koordináta" }, { status: 400 });
     // a találatok cache-elhetők: a pontot ~100 m-re kerekítjük
     const la = lat.toFixed(3), lo = lon.toFixed(3);
+    const { NearCache } = await getDb();
+    const hit = await NearCache.findById(`${la},${lo},${r}`).lean();
+    if (hit) return Response.json(hit.fc, { headers: { "Cache-Control": "private, max-age=86400" } });
     const ar = `(around:${Math.round(r * 1000)},${la},${lo})`;
     const qn = `[out:json][timeout:25];(
       nwr["amenity"="parking"]["hgv"~"^(yes|designated)$"]${ar};
@@ -54,7 +61,7 @@ export async function GET(req: NextRequest) {
       const res = await fetch(ep, {
         method: "POST", body: "data=" + encodeURIComponent(qn),
         headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json", "User-Agent": "tesotter-truck-planner/1.0" },
-        signal: AbortSignal.timeout(22000),
+        signal: AbortSignal.timeout(55000),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.json();
@@ -85,7 +92,9 @@ export async function GET(req: NextRequest) {
           },
         };
       }).filter(Boolean);
-      return Response.json({ type: "FeatureCollection", features }, { headers: { "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800" } });
+      const fc = { type: "FeatureCollection" as const, features };
+      await NearCache.updateOne({ _id: `${la},${lo},${r}` }, { $set: { fc, at: new Date() } }, { upsert: true }).catch(() => {});
+      return Response.json(fc, { headers: { "Cache-Control": "private, max-age=86400" } });
     } catch {
       return Response.json({ error: "A parkoló-adatbázis (Overpass) most túlterhelt – próbáld újra." }, { status: 504 });
     }

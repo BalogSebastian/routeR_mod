@@ -106,6 +106,7 @@ export default function MapView({
   const nearTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const nearEnterTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const nearHover = useRef(false);
+  const prefetchToken = useRef(0);
   const nearCtrl = useRef<AbortController | null>(null);
   const nearCache = useRef(new Map<string, GeoJSON.FeatureCollection>());
   const scheduleHideNear = useRef<() => void>(() => {});
@@ -156,6 +157,19 @@ export default function MapView({
         if ((e as Error).name !== "AbortError") setNear({ status: "error", label, truck: 0, rest: 0, services: 0, msg: (e as Error).message || "Betöltési hiba" });
       }
     }, 200);
+  }, []);
+
+  /** a kiszámolt útvonal megállóinak előtöltése a háttérben: hover-nél azonnal ott az adat */
+  const prefetchNear = useCallback(async (list: { lat: number; lon: number }[], token: number) => {
+    for (const p of list) {
+      if (prefetchToken.current !== token) return;
+      const key = `${p.lat.toFixed(3)},${p.lon.toFixed(3)}`;
+      if (nearCache.current.has(key)) continue;
+      try {
+        const res = await fetch(`/api/restrictions?mode=nearby&lat=${p.lat}&lon=${p.lon}&r=40`);
+        if (res.ok) nearCache.current.set(key, await res.json());
+      } catch { /* hover-nél újra próbáljuk */ }
+    }
   }, []);
   const [menu, setMenu] = useState<{ x: number; y: number; lat: number; lon: number } | null>(null);
   const stopMarkers = useRef<Marker[]>([]);
@@ -647,6 +661,8 @@ export default function MapView({
     const route = routes[selected];
     if (!route) return;
     const cum = cumulative(route.geometry);
+    const token = ++prefetchToken.current;
+    void prefetchNear(route.stops.filter((x) => x.kind === "break" || x.kind === "rest"), token);
     for (const st of route.stops) {
       if (st.kind === "ferry") continue;
       const d = document.createElement("div");
@@ -674,7 +690,7 @@ export default function MapView({
       });
       stopMarkers.current.push(mk);
     }
-  }, [routes, selected, ready, showNear, hideNear, scheduleHide]);
+  }, [routes, selected, ready, showNear, hideNear, scheduleHide, prefetchNear]);
 
   // kamionparkolók / pihenők
   useEffect(() => {
@@ -817,7 +833,7 @@ export default function MapView({
         <div className="pointer-events-none absolute left-3 top-24 z-10 w-[min(92%,300px)] rounded-2xl border border-violet-200 bg-white/95 p-3.5 text-slate-700 shadow-xl shadow-violet-900/15 backdrop-blur sm:top-3 sm:left-auto sm:right-14">
           <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-violet-600">Pihenési lehetőségek · 40 km</div>
           <div className="mt-0.5 truncate text-[13px] font-bold text-slate-900">{near.label}</div>
-          {near.status === "loading" && <div className="mt-2 flex items-center gap-2 text-xs text-slate-500"><span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />Keresés…</div>}
+          {near.status === "loading" && <div className="mt-2 flex items-center gap-2 text-xs text-slate-500"><span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />Keresés a környéken… (első alkalommal akár fél percig is tarthat)</div>}
           {near.status === "error" && <div className="mt-2 text-xs text-rose-600">{near.msg}</div>}
           {near.status === "ok" && (
             <>
