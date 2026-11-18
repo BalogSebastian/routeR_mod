@@ -151,6 +151,8 @@ export default function MapView({
       },
       center: [17.5, 48.5],
       zoom: 5,
+      // a MapLibre-felirat nem kötelező; az OSM-forrásmegjelölés (licenc) marad, összecsukva (i) gombként
+      attributionControl: { compact: true, customAttribution: [] },
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
     map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left");
