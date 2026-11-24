@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/Brand";
 import RouteNet from "./RouteNet";
 
+const LETTER = ["Kedves Fuvarozó!", "Köszönjük, hogy a routeR-t választod.", "Neked építettük: útdíj, pihenők, tilalmak – egy helyen, Excel nélkül.", "Jó utat és sok sikeres fuvart!"];
 const FEATURES = ["Kamion-routing méret, tömeg és ADR szerint", "Útdíj 27 országban, 2026-os tarifákkal", "Komp, vasút, No-Go zónák", "EU 561/2006 menetrend és ETA"];
 const COUNTRIES = ["HU", "AT", "DE", "CZ", "SK", "PL", "IT", "FR", "ES", "BE", "NL", "DK", "SE", "GB", "SI", "HR", "RO", "BG"];
 
@@ -30,7 +31,7 @@ export default function AuthShell({ title, subtitle, children, footer }: { title
           <div className="rr-up mb-8 font-mono text-[10px] font-bold uppercase tracking-[0.4em] text-[#00ff9d]" style={{ animationDelay: "0.3s" }}>
             Kamion-útvonaltervező · útdíj-kalkulátor
           </div>
-          <h2 className="font-black uppercase leading-[0.86] tracking-tighter" style={{ fontFamily: "var(--font-brand)" }}>
+          <h2 className="font-black uppercase leading-[0.86] tracking-tighter [@media(max-height:820px)]:text-[0.8em]" style={{ fontFamily: "var(--font-brand)" }}>
             {[
               { t: "Kamion", cls: "text-[clamp(3rem,6.2vw,6.5rem)]" },
               { t: "útvonal.", cls: "text-[clamp(3rem,6.2vw,6.5rem)]" },
@@ -43,19 +44,43 @@ export default function AuthShell({ title, subtitle, children, footer }: { title
               </span>
             ))}
           </h2>
-          <ul className="mt-12 grid max-w-xl gap-3 sm:grid-cols-2">
-            {FEATURES.map((f, i) => (
-              <li key={f} className="rr-up flex items-start gap-3 border-t border-white/10 pt-3 text-[14px] leading-snug text-white/70" style={{ animationDelay: `${0.9 + i * 0.1}s` }}>
-                <span className="mt-0.5 font-mono text-[11px] font-bold text-[#00ff9d]">0{i + 1}</span>
-                {f}
-              </li>
-            ))}
-          </ul>
+          {/* kézírásos köszönőlevél: berepül, megpördül, lebeg */}
+          <figure className="rr-float mt-12 max-w-[440px] xl:ml-10">
+            <div className="rr-card-in relative" style={{ animationDelay: "1s" }}>
+              <span aria-hidden className="absolute -top-3 left-8 z-10 h-6 w-24 -rotate-6 bg-[#00ff9d]/75" />
+              <span aria-hidden className="absolute -top-2 right-10 z-10 h-6 w-20 rotate-[9deg] bg-white/55" />
+              <div
+                className="relative overflow-hidden rounded-[4px] px-7 pb-6 pt-7 text-[#1a2a6c] shadow-[0_30px_60px_rgba(0,0,0,0.6),0_0_0_1px_rgba(0,255,157,0.15)]"
+                style={{
+                  background: "#fffdf5",
+                  backgroundImage: "linear-gradient(90deg, transparent 30px, rgba(255,90,90,0.28) 30px, rgba(255,90,90,0.28) 31px, transparent 31px), repeating-linear-gradient(180deg, transparent 0 25px, rgba(0,120,200,0.12) 25px 26px)",
+                }}
+              >
+                <blockquote className="font-script pl-4 text-[19px] leading-[26px]">
+                  {LETTER.map((l, i) => (
+                    <p key={i} className={`rr-write ${i === 0 ? "text-[24px] font-bold text-black" : ""}`} style={{ animationDelay: `${2 + i * 0.55}s` }}>
+                      {l}
+                    </p>
+                  ))}
+                </blockquote>
+                <figcaption className="rr-write mt-3 pl-4" style={{ animationDelay: `${2 + LETTER.length * 0.55}s`, animationDuration: "1.2s" }}>
+                  <span className="font-script block text-[24px] font-bold leading-7 text-black">Erick, Sebastian és Gergő</span>
+                  <span className="mt-1 block font-mono text-[9.5px] font-bold uppercase tracking-[0.2em] text-black/45">a Tesotter tulajdonosai és az egész csapat</span>
+                </figcaption>
+                <svg aria-hidden viewBox="0 0 100 100" className="rr-stamp absolute -right-2 bottom-3 h-20 w-20" style={{ animationDelay: `${2.6 + LETTER.length * 0.55}s` }}>
+                  <circle cx="50" cy="50" r="44" fill="none" stroke="#00a866" strokeWidth="3" />
+                  <circle cx="50" cy="50" r="36" fill="none" stroke="#00a866" strokeWidth="1.2" />
+                  <text x="50" y="48" textAnchor="middle" fontSize="11" fontWeight="900" fill="#00a866">KÖSZÖNJÜK</text>
+                  <text x="50" y="64" textAnchor="middle" fontSize="15" fill="#00a866">♥</text>
+                </svg>
+              </div>
+            </div>
+          </figure>
         </div>
 
         <div className="relative z-10 hidden overflow-hidden border-t border-white/10 py-4 lg:block">
           <div className="rr-marquee flex w-max gap-8 whitespace-nowrap font-mono text-[13px] font-bold tracking-widest text-white/35">
-            {[...COUNTRIES, ...COUNTRIES].map((c, i) => (
+            {[...FEATURES, ...COUNTRIES, ...FEATURES, ...COUNTRIES].map((c, i) => (
               <span key={i} className="flex items-center gap-8">
                 {c}
                 <span className="inline-block h-1.5 w-1.5 rotate-45 bg-[#00ff9d]" />

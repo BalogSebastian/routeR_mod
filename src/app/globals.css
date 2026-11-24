@@ -218,8 +218,24 @@ details > summary::-webkit-details-marker { display: none; }
 .rr-blink { animation: rr-blink 1s steps(1) infinite; }
 
 /* köszönőlevél */
-@keyframes rr-letter-in { from { opacity: 0; transform: translateY(40px) rotate(-6deg) scale(0.92); } to { opacity: 1; transform: rotate(-1.2deg); } }
-.rr-letter { animation: rr-letter-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
+/* boríték: beesik, kinyílik a fedele, a levél kiemelkedik, a boríték lehull */
+@keyframes rr-env { 0% { opacity: 0; transform: translateY(-70vh) rotate(-16deg) scale(0.8); } 22% { opacity: 1; transform: translateY(0) rotate(4deg) scale(1); } 29% { transform: rotate(-2deg); } 35% { transform: rotate(0); } 70% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(60vh) rotate(8deg) scale(0.9); } }
+.rr-env { animation: rr-env 2.3s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+@keyframes rr-flap { 0%, 36% { transform: rotateX(0); } 56%, 100% { transform: rotateX(180deg); } }
+.rr-flap { transform-origin: top; animation: rr-flap 2.3s ease-in-out both; }
+@keyframes rr-seal { 0%, 30% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 40%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(2) rotate(40deg); } }
+.rr-seal { animation: rr-seal 2.3s ease both; }
+@keyframes rr-letter-in { 0%, 44% { opacity: 0; transform: translateY(28%) scale(0.5); } 68% { opacity: 1; transform: translateY(-7%) scale(1.04) rotate(2.5deg); } 84% { transform: translateY(1%) scale(0.99) rotate(-2.4deg); } 100% { opacity: 1; transform: rotate(-1.2deg); } }
+.rr-letter { animation: rr-letter-in 2.5s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+@keyframes rr-burst { 0% { opacity: 0; transform: rotate(var(--a)) translateX(0) scale(0.3); } 12% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--a)) translateX(var(--d)) scale(1) rotate(220deg); } }
+.rr-burst { opacity: 0; animation: rr-burst 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards; }
+@keyframes rr-flash { 0% { opacity: 0; transform: scale(0.2); } 30% { opacity: 0.9; } 100% { opacity: 0; transform: scale(2.6); } }
+.rr-flash { opacity: 0; animation: rr-flash 1s ease-out forwards; }
+/* belépőoldali levél-kártya: berepül, megpördül, finoman lebeg */
+@keyframes rr-card-in { 0% { opacity: 0; transform: translate(160px, -120px) rotate(24deg) scale(1.35); } 55% { opacity: 1; transform: translate(0, 8px) rotate(-7deg) scale(0.97); } 75% { transform: translate(0, -2px) rotate(-1deg) scale(1.01); } 100% { opacity: 1; transform: rotate(-3deg); } }
+.rr-card-in { animation: rr-card-in 1.4s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+@keyframes rr-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.rr-float { animation: rr-float 6s ease-in-out 2.6s infinite; }
 @keyframes rr-write { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 .rr-write { clip-path: inset(0 100% 0 0); animation: rr-write 0.9s cubic-bezier(0.55, 0.1, 0.35, 1) forwards; }
 @keyframes rr-stamp { 0% { opacity: 0; transform: scale(2.4) rotate(-30deg); } 70% { opacity: 1; transform: scale(0.92) rotate(-14deg); } 100% { opacity: 1; transform: scale(1) rotate(-14deg); } }
@@ -229,6 +245,7 @@ details > summary::-webkit-details-marker { display: none; }
 .font-script { font-family: var(--font-script), "Comic Sans MS", cursive; }
 
 @media (prefers-reduced-motion: reduce) {
-  .rr-flow, .rr-ping, .rr-marquee, .rr-truck, .rr-blink { animation: none; }
-  .rr-draw, .rr-rise, .rr-up, .rr-write, .rr-stamp, .rr-letter, .rr-backdrop { animation-duration: 0.01s; animation-delay: 0s !important; }
+  .rr-flow, .rr-ping, .rr-marquee, .rr-truck, .rr-blink, .rr-float { animation: none; }
+  .rr-env, .rr-burst, .rr-flash { display: none; }
+  .rr-draw, .rr-rise, .rr-up, .rr-write, .rr-stamp, .rr-letter, .rr-backdrop, .rr-card-in { animation-duration: 0.01s; animation-delay: 0s !important; }
 }

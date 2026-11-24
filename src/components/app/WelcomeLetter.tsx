@@ -57,7 +57,7 @@ export default function WelcomeLetter({ name, email, pending = false }: { name: 
     { t: "A routeR még béta, ezért minden visszajelzésed számít. Ha valami nem úgy működik, ahogy várnád, írj nekünk bátran: egy tulajdonos olvassa el, és a csapatból a legjobb ember válaszol." },
     { t: "Jó utat és sok sikeres fuvart!" },
   ];
-  const base = 0.9;
+  const base = 2.1;
   const step = 0.75;
   const sigAt = base + lines.length * step;
 
@@ -65,7 +65,31 @@ export default function WelcomeLetter({ name, email, pending = false }: { name: 
     <div role="dialog" aria-modal="true" aria-labelledby="rr-letter-title" className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto p-4 sm:p-8">
       <button aria-label="Bezárás" onClick={close} className="rr-backdrop fixed inset-0 cursor-default bg-black/70 backdrop-blur-sm" />
 
-      <div className="rr-letter relative my-auto w-full max-w-[620px]">
+      {/* boríték: beesik, a pecsét elpattan, a fedél kinyílik, majd lehull */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-[1] flex items-center justify-center [perspective:900px]">
+        <div className="rr-env relative h-[220px] w-[340px] sm:h-[250px] sm:w-[400px]">
+          <div className="absolute inset-0 bg-[#efe8d2] shadow-[0_30px_70px_rgba(0,0,0,0.5)]" />
+          <div className="absolute inset-0 bg-[#e4dbbf] [clip-path:polygon(0_100%,50%_48%,100%_100%)]" />
+          <div className="absolute inset-0 bg-[#e9e1c8] [clip-path:polygon(0_0,50%_52%,0_100%)]" />
+          <div className="absolute inset-0 bg-[#e9e1c8] [clip-path:polygon(100%_0,50%_52%,100%_100%)]" />
+          <div className="rr-flap absolute inset-x-0 top-0 h-[56%] bg-[#f6f0dc] [backface-visibility:visible] [clip-path:polygon(0_0,100%_0,50%_100%)]" />
+          <div className="rr-seal absolute left-1/2 top-[52%] flex h-14 w-14 items-center justify-center rounded-full bg-[#00ff9d] font-black text-black shadow-[0_0_30px_#00ff9d]" style={{ fontFamily: "var(--font-brand)" }}>R</div>
+          <div className="absolute bottom-4 left-5 font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-black/40">Neked · {name}</div>
+        </div>
+      </div>
+      {/* fényvillanás és konfetti, amikor a levél kiemelkedik */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-[3] flex items-center justify-center">
+        <span className="rr-flash absolute h-72 w-72 rounded-full bg-[radial-gradient(circle,#00ff9d_0%,transparent_65%)]" style={{ animationDelay: "1.05s" }} />
+        {Array.from({ length: 18 }, (_, i) => (
+          <span
+            key={i}
+            className={`rr-burst absolute ${i % 3 === 0 ? "h-3 w-3 bg-[#00ff9d]" : i % 3 === 1 ? "h-2 w-4 bg-white" : "h-2.5 w-2.5 rounded-full bg-[#00c97b]"}`}
+            style={{ ["--a" as string]: `${i * 20}deg`, ["--d" as string]: `${220 + (i % 4) * 70}px`, animationDelay: `${1.1 + (i % 3) * 0.05}s` }}
+          />
+        ))}
+      </div>
+
+      <div className="rr-letter relative z-[2] my-auto w-full max-w-[620px]">
         {/* ragasztószalagok */}
         <span aria-hidden className="absolute -top-4 left-10 z-10 h-8 w-28 -rotate-6 bg-[#00ff9d]/70 shadow-sm" />
         <span aria-hidden className="absolute -top-3 right-12 z-10 h-8 w-24 rotate-[8deg] bg-white/60 shadow-sm" />
