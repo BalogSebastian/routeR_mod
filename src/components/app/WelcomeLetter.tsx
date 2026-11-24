@@ -64,7 +64,7 @@ export default function WelcomeLetter({ name, email, pending = false }: { name: 
     pending
       ? { t: "A fiókodat hamarosan jóváhagyjuk, és e-mailben szólunk, amint indulhatsz." }
       : { t: "A fiókod él: tervezd meg az első fuvarodat, és nézd meg, mennyi idő marad máshoz." },
-    { t: "A routeR még béta, ezért minden visszajelzésed számít. Ha valami nem úgy működik, ahogy várnád, írj nekünk bátran: egy tulajdonos olvassa el, és a csapatból a legjobb ember válaszol." },
+    { t: "Minden visszajelzésed számít nekünk. Ha valami nem úgy működik, ahogy várnád, írj nekünk bátran: egy tulajdonos olvassa el, és a csapatból a legjobb ember válaszol." },
     { t: "Jó utat és sok sikeres fuvart!" },
   ];
   const base = 2.1;
@@ -121,7 +121,7 @@ export default function WelcomeLetter({ name, email, pending = false }: { name: 
                 <path id="rr-stamp-arc" d="M50 50 m-41 0 a41 41 0 1 1 82 0 a41 41 0 1 1 -82 0" />
               </defs>
               <text fontSize="8.5" fontWeight="800" letterSpacing="2.6" fill="#00a866">
-                <textPath href="#rr-stamp-arc">ROUTER · TESOTTER · BÉTA · 2026 ·</textPath>
+                <textPath href="#rr-stamp-arc">ROUTER · TESOTTER · KAMION · 2026 ·</textPath>
               </text>
               <text x="50" y="47" textAnchor="middle" fontSize="11" fontWeight="900" fill="#00a866">KÖSZÖNJÜK</text>
               <text x="50" y="62" textAnchor="middle" fontSize="16" fill="#00a866">♥</text>

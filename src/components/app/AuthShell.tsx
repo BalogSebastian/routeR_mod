@@ -21,9 +21,6 @@ export default function AuthShell({ title, subtitle, children, footer }: { title
               <span className="whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.18em] text-white/40">by tesotter</span>
             </span>
           </Link>
-          <span className="hidden items-center gap-2 border border-white/25 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-white/70 sm:flex">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#00ff9d]" /> Béta
-          </span>
         </div>
 
         <div className="relative z-10 hidden flex-1 flex-col justify-center px-10 lg:flex xl:px-16">
