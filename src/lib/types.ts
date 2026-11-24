@@ -13,6 +13,8 @@ export interface Waypoint {
    * az indulás felrakás, az érkezés lerakás, a köztes megálló mindkettő.
    */
   cargo?: CargoKind;
+  /** belső: hosszú fuvar darabolási pontja (menetirány, fok) – csak autópályára / gyorsútra illeszthető */
+  split?: number;
 }
 
 export type CargoKind = "load" | "unload" | "both" | "none";

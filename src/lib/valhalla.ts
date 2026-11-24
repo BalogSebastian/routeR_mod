@@ -178,14 +178,16 @@ export function truckCosting(v: Vehicle, o: RouteOptions) {
   };
 }
 
-type VLocation = { lat: number; lon: number; radius?: number; type: "break" | "through"; heading?: number; heading_tolerance?: number };
+type VLocation = { lat: number; lon: number; radius?: number; type: "break" | "through"; heading?: number; heading_tolerance?: number; search_filter?: { min_road_class: string } };
 export type Excl = { lat: number; lon: number };
 
 /** a kis (pl. városi) saját zónák natívan is kizárhatók, ha a szerver kerület-limitjébe beleférnek */
 export interface Avoid { points: Excl[]; polygons: LngLat[][] }
 
 const toLocation = (w: Waypoint): VLocation =>
-  w.via ? { lat: w.lat, lon: w.lon, radius: 80, type: "through" } : { lat: w.lat, lon: w.lon, radius: 600, type: "break" };
+  w.split !== undefined
+    ? { lat: w.lat, lon: w.lon, radius: 500, type: "break", heading: w.split, heading_tolerance: 60, search_filter: { min_road_class: "trunk" } }
+    : w.via ? { lat: w.lat, lon: w.lon, radius: 80, type: "through" } : { lat: w.lat, lon: w.lon, radius: 600, type: "break" };
 
 async function truckRoute(locations: VLocation[], v: Vehicle, o: RouteOptions, alternates: number, avoid?: Avoid, light = false) {
   const body = {

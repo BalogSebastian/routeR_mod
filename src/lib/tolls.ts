@@ -150,8 +150,8 @@ export const TOLL_RULES: Record<string, TollRule> = {
       const r = v.weight >= 12 ? (hi ? 0.48 : 0.24) : v.weight >= 7.5 ? (hi ? 0.29 : 0.14) : (hi ? 0.17 : 0.08);
       return ((r / 1.21) * ef(v, [1, 1.15, 1.15, 1.29])) / FX.RON;
     },
-    note: "A TollRo 2026.10.01-re volt kitűzve, a CNAIR 2027.04.01-re kérte a halasztását – az indulás nem megerősített. ≥12 t EURO VI: 0,48 lej/km autópályán, 0,24 lej/km országos úton (bruttó). Ha még a rovinieta érvényes, az időalapú.",
-    confidence: "estimate", asOf: "MTI 1925/2025 (másodlagos forrás), bizonytalan indulás", verified: false,
+    note: "A TollRo km-alapú díj 2026.10.01 óta él (másodlagos forrás); a tarifák még nincsenek hivatalos táblázattal ellenőrizve. ≥12 t EURO VI: 0,48 lej/km autópályán, 0,24 lej/km országos úton (bruttó).",
+    confidence: "estimate", asOf: "2026.10.01 (másodlagos források)", verified: false,
   },
   BG: {
     name: "Bulgária", system: "BGTOLL (km-alapú)",
@@ -187,7 +187,7 @@ export const TOLL_RULES: Record<string, TollRule> = {
     name: "Olaszország", system: "Autostrade (kapus, tengelyszám szerinti osztály)", classes: ["motorway"], osmToll: true,
     rate: (v) => {
       // ASPI 2026.01.01, sík szakasz, ÁFA (22%) nélkül: B/3/4/5. osztály; a hegyi szakasz ~18%-kal drágább
-      const gross = v.weight <= 3.5 ? 0.0745 : v.axles <= 2 ? 0.0772 : v.axles === 3 ? 0.10615 : v.axles === 4 ? 0.16108 : 0.19034;
+      const gross = v.weight <= 3.5 ? 0.07869 : v.axles <= 2 ? 0.08054 : v.axles === 3 ? 0.10615 : v.axles === 4 ? 0.16108 : 0.19034;
       return (gross / 1.22) * 1.04;
     },
     note: "Autostrade per l'Italia 2026: 5. osztály (5+ tengely) 0,19034 €/km sík / 0,22437 €/km hegyi szakaszon ÁFA-val; 4. osztály 0,16108 / 0,18922. A22 Brennero 5. osztály nettó 0,128 (sík) / 0,151 €/km (hegyi). A kalkuláció nettó, kb. 4% hegyi-szakasz átlaggal.",
@@ -202,7 +202,7 @@ export const TOLL_RULES: Record<string, TollRule> = {
   ES: {
     name: "Spanyolország", system: "Peaje (kapus AP autópályák, Pesados 1 / 2)", classes: [], osmToll: true,
     rate: (v) => (v.weight <= 3.5 ? 0.075 : v.axles <= 3 ? 0.105 : 0.139),
-    note: "Csak a díjas AP-szakaszok (OSM toll=yes). Pesados 2 (≥4 tengely), pl. AP-9 A Coruña–Santiago 9,60 € ÁFA-val (2026) → ~0,14 €/km nettó. Az AP-7 / AP-4 / AP-2 2020–21 óta ingyenes.",
+    note: "Csak a díjas AP-szakaszok (OSM toll=yes). Pesados 2 (≥4 tengely), pl. AP-9 A Coruña–Santiago 9,60 € ÁFA-val (2026) → ~0,14 €/km nettó. Ingyenes: AP-4, AP-2, AP-7 La Jonquera–Alicante (2020–21), az alicantei elkerülő (2026.01.01) és az AP-68 állami szakaszai (2026.11.11). Díjas maradt: AP-7 Alicante–Vera és Costa del Sol, AP-68 Bizkaia–Álava.",
     confidence: "source", asOf: "2026.01.01 (Audasa díjtábla alapján)", verified: false,
   },
   PT: {
@@ -251,7 +251,7 @@ export const TOLL_RULES: Record<string, TollRule> = {
     confidence: "official", asOf: "Staatscourant 2026-18058 / RDW 2027", verified: true,
   },
   DK: {
-    name: "Dánia", system: "KmToll (km-alapú, 2025 óta)", classes: ["motorway", "trunk"], osmToll: false,
+    name: "Dánia", system: "KmToll (km-alapú, 2025 óta)", classes: ["motorway", "trunk", "primary"], osmToll: false,
     rate: (v, _rc, _h, _at, dep) => {
       const dkk = v.weight >= 32 ? 1.1 : v.weight >= 18 ? 1.0 : v.weight >= 12 ? 0.86 : dep >= Date.UTC(2027, 0, 5) && v.weight > 3.5 ? 0.78 : 0;
       return dkk / FX.DKK;
@@ -345,7 +345,7 @@ const NATIONAL_NO = /^\d{1,2}[a-z]?$/;
 /** gyorsforgalmi út jelzése: M0, D1, R1, A4, S8 */
 const EXPRESS_REF = /^[ADMRS] ?\d{1,3}[a-z]?$/;
 /** spanyol díjas autópályák (a Valhalla-adatból a toll jelölés hiányzik) */
-const ES_TOLL_REF = /^(AP-?(9|8|68|66|36|41|46|6|61|51)|R-?[2-5])$/;
+const ES_TOLL_REF = /^(AP-?(9|8|66|36|41|46|6|61|51|53|71)|R-?[2-5]|M-?12)$/;
 const IT_FREE_REF = /^A ?(2|19)$/;
 
 /**
@@ -376,8 +376,11 @@ export function isTolledFor(cc: string, rule: TollRule, f: EdgeFacts): boolean {
       if (f.osmToll) return true;
       if (rc !== "motorway" && rc !== "trunk") return false;
       if (hasName(f, ES_TOLL_REF)) return true;
-      // AP-7: csak Tarragonától északra (La Jonquera–Barcelona–Tarragona) és a Costa del Solon díjas
-      return hasName(f, /^AP-?7$/) && !!f.at && (f.at[1] > 41.0 || f.at[1] < 36.8);
+      // AP-68: az állami (La Rioja, Navarra, Aragón) szakaszok 2026.11.11 óta ingyenesek; Bizkaia + Álava díjas
+      if (hasName(f, /^AP-?68$/)) return !!f.at && f.at[1] > 42.65;
+      // AP-7: La Jonquera–Tarragona 2021.09.01, Tarragona–Alicante 2020.01.01 óta ingyenes;
+      // díjas maradt: Alicante–Cartagena, Cartagena–Vera és a Costa del Sol (Málaga–Guadiaro)
+      return hasName(f, /^AP-?7$/) && !!f.at && f.at[1] < 38.3;
     case "IT":
       if (f.osmToll) return true;
       return rc === "motorway" && !hasName(f, IT_FREE_REF);

@@ -17,7 +17,7 @@ export interface SpecialToll {
   replacesKm?: boolean;
   /** legalább ennyi km egyező él kell az érvényesítéshez */
   minKm: number;
-  /** egy (teljes) áthaladás ára EUR: [≤3,5 t, 2 tengely, 3 tengely, 4+ tengely] */
+  /** egy (teljes) áthaladás NETTÓ (ÁFA nélküli) ára EUR, mint a km-díjaknál: [≤3,5 t, 2 tengely, 3 tengely, 4+ tengely] */
   fees?: [number, number, number, number];
   note: string;
   confidence: "official" | "source" | "estimate";
@@ -29,18 +29,19 @@ const any = (names: string[], re: RegExp) => names.some((n) => re.test(n));
 export const SPECIALS: SpecialToll[] = [
   {
     id: "frejus", name: "Fréjus közúti alagút (T4, IT–FR, 12,9 km)", country: "FR/IT",
-    test: (n) => any(n, /traforo stradale del fr[eé]jus|tunnel routier du fr[eé]jus|fr[eé]jus/i),
+    // csak maga az alagút (név vagy T4 jelzés) a portálok környékén – az „Autostrada del Frejus” (A32) nem
+    test: (n, cc, [x, y]) => (cc === "IT" || cc === "FR") && x > 6.6 && x < 6.75 && y > 45.06 && y < 45.22 && any(n, /(traforo|tunnel)[^,]*fr[eé]jus|^T ?4$/i),
     minKm: 8,
-    fees: [56.4, 204.8, 411.6, 411.6],
-    note: "Egy irányra, ÁFA-val. 4. osztály (≥3 tengely, EURO 5–6): 411,60 € (SITAF, 2026.01.01-től, olasz oldal; francia oldalon ~404,90 €). 2 tengely: 204,80 €. EURO 0–4 kamion kitiltva.",
+    fees: [46.2, 167.9, 337.4, 337.4],
+    note: "Egy irányra, nettó 337,40 € (ÁFA-val: 411,60 € olasz / 404,90 € francia oldalon). 4. osztály (≥3 tengely, EURO 5–6): 411,60 € bruttó (SITAF, 2026.01.01-től, olasz oldal; francia oldalon ~404,90 €). 2 tengely: 204,80 €. EURO 0–4 kamion kitiltva.",
     confidence: "official", asOf: "2026.01.01 (SITAF)",
   },
   {
     id: "montblanc", name: "Mont Blanc alagút (FR–IT, 11,6 km)", country: "FR/IT",
     test: (n) => any(n, /tunnel du mont[- ]blanc|traforo del monte bianco/i),
     minKm: 8,
-    fees: [56.4, 204.8, 411.6, 411.6],
-    note: "Egy irányra, ÁFA-val. 4. osztály: ~411,60 € (olasz oldal) / ~404,90 € (francia oldal) – a 2025-ös hivatalos díj +1,19% (2026). EURO 0–4 kamion kitiltva.",
+    fees: [46.2, 167.9, 337.4, 337.4],
+    note: "Egy irányra, nettó ~337,40 € (ÁFA-val). 4. osztály: ~411,60 € (olasz oldal) / ~404,90 € (francia oldal) – a 2025-ös hivatalos díj +1,19% (2026). EURO 0–4 kamion kitiltva.",
     confidence: "source", asOf: "2026 (ATMB/GEIE-TMB 2025 × 1,0119)",
   },
   {
@@ -55,13 +56,13 @@ export const SPECIALS: SpecialToll[] = [
     id: "felbertauern", name: "Felbertauern alagút (AT, 5,3 km)", country: "AT",
     test: (n, cc) => cc === "AT" && any(n, /felbertauern/i),
     minKm: 3,
-    fees: [12, 40, 55, 72],
-    note: "≥4 tengelyes kamion: 72,00 € egy irányra (hivatalos; GO-Box nem használható). A 2–3 tengelyes díj becslés. A 40 t-s tranzit-szabályokat ellenőrizd.",
+    fees: [10, 30, 45, 60],
+    note: "Bruttó (ÁFA-val): 2 tengely 36 €, 3 tengely 54 €, ≥4 tengely 72,00 € egy irányra (nettó 60 €) (hivatalos; GO-Box nem használható). A 2–3 tengelyes díj becslés. A 40 t-s tranzit-szabályokat ellenőrizd.",
     confidence: "official", asOf: "2026 (felbertauern.at)",
   },
   {
     id: "oresund", name: "Øresund híd (DK–SE)", country: "DK/SE",
-    test: (n) => any(n, /[øöo]resunds?(bron|broen|bridge)?/i),
+    test: (n, cc, [x, y]) => (cc === "SE" || cc === "DK") && x > 12.55 && x < 12.95 && y > 55.5 && y < 55.65 && any(n, /[øöo]resunds?(bron|broen|bridge|förbindelsen|forbindelsen)?/i),
     minKm: 3,
     fees: [60, 78.4, 78.4, 78.4],
     note: "ØresundBUSINESS (1–500 út/hó, >9 m kamionnál éves díj nélkül): 78,40 € ÁFA nélkül. Kapunál fizetve: 1324 DKK (~177 €).",
@@ -79,32 +80,32 @@ export const SPECIALS: SpecialToll[] = [
     id: "liefkenshoek", name: "Liefkenshoek alagút (Antwerpen, BE)", country: "BE",
     test: (n, cc) => cc === "BE" && any(n, /liefkenshoek/i),
     minKm: 1,
-    fees: [6.2, 17.6, 17.6, 17.6],
-    note: "2. kategória, nappal (06–22 h) Teletol-lal 17,60 € (kártyával 21,90 €, készpénz 25 €); éjjel az autós díj (4,40 €). A Viapass km-díj külön.",
+    fees: [5.12, 14.55, 14.55, 14.55],
+    note: "Nettó 14,55 € (ÁFA-val 17,60 €). 2. kategória, nappal (06–22 h) Teletol-lal 17,60 € (kártyával 21,90 €, készpénz 25 €); éjjel az autós díj (4,40 €). A Viapass km-díj külön.",
     confidence: "source", asOf: "2026 (ADAC)",
   },
   {
     id: "westerschelde", name: "Westerschelde alagút (NL)", country: "NL",
     test: (n, cc) => cc === "NL" && any(n, /westerschelde/i),
     minKm: 3,
-    fees: [0, 25, 25, 25],
-    note: "4. kategória (>12 m): 25,00 € (T-Tag-gel 15,00 €). Személyautóknak 2024 óta ingyenes.",
+    fees: [0, 20.66, 20.66, 20.66],
+    note: "Nettó 20,66 € (ÁFA-val 25 €). 4. kategória (>12 m): 25,00 € (T-Tag-gel 15,00 €). Személyautóknak 2024 óta ingyenes.",
     confidence: "official", asOf: "2026 (westerscheldetunnel.nl)",
   },
   {
     id: "herrentunnel", name: "Herrentunnel (Lübeck, DE)", country: "DE",
     test: (n, cc) => cc === "DE" && any(n, /herrentunnel/i),
     minKm: 0.5,
-    fees: [3, 10, 14, 17.6],
-    note: "D osztály (≥4 tengely): 17,60 € készpénz / 14,60 € Quick-Box-szal (2025.03.01 óta).",
+    fees: [2.52, 8.4, 11.76, 14.79],
+    note: "Nettó 14,79 € (ÁFA-val 17,60 €). D osztály (≥4 tengely): 17,60 € készpénz / 14,60 € Quick-Box-szal (2025.03.01 óta).",
     confidence: "official", asOf: "2025.03.01 (herrentunnel.de)",
   },
   {
     id: "warnow", name: "Warnowtunnel (Rostock, DE)", country: "DE",
     test: (n, cc) => cc === "DE" && any(n, /warnow ?tunnel/i),
     minKm: 0.5,
-    fees: [5, 12, 15, 20.3],
-    note: "≥4 tengely: készpénz 23,00 € (máj.–okt.) / 20,30 € (nov.–ápr.); kártyával / boxszal 17,07 €.",
+    fees: [4.2, 10.08, 12.61, 17.06],
+    note: "Nettó 17,06 € (ÁFA-val 20,30 €). ≥4 tengely: készpénz 23,00 € (máj.–okt.) / 20,30 € (nov.–ápr.); kártyával / boxszal 17,07 €.",
     confidence: "official", asOf: "2025/26 (warnowquerung.de)",
   },
   {
@@ -127,8 +128,8 @@ export const SPECIALS: SpecialToll[] = [
     id: "dartford", name: "Dartford Crossing (UK)", country: "GB",
     test: (n, cc) => cc === "GB" && any(n, /dartford|queen elizabeth ii bridge/i),
     minKm: 1,
-    fees: [3.5, 9.8, 9.8, 9.8],
-    note: "D osztály (>2 tengely): 8,40 £ (~9,80 €), 06–22 h; éjjel ingyenes.",
+    fees: [4.05, 4.85, 9.7, 9.7],
+    note: "Dart Charge (ÁFA-mentes): C osztály (2 tengely) 4,20 £, D osztály (>2 tengely) 8,40 £ (~9,70 €), 06–22 h; éjjel ingyenes.",
     confidence: "official", asOf: "2026 (gov.uk Dart Charge)",
   },
   {
@@ -159,7 +160,7 @@ export const SPECIALS: SpecialToll[] = [
   },
   {
     id: "a10", name: "A10 Tauern autópálya (Flachau – Rennweg, Tauern + Katschberg alagút, 47 km)", country: "AT",
-    test: (n, cc, [, y]) => cc === "AT" && y < 47.36 && y > 47.0 && any(n, /^A ?10$/i),
+    test: (n, cc, [, y]) => cc === "AT" && y < 47.36 && y > 46.9 && any(n, /^A ?10$/i),
     minKm: 5, sectionKm: 47, replacesKm: true,
     fees: [0, 23.9, 33.35, 49.74],
     note: "Hivatalos 2026-os szakaszdíj. A km-alapú GO-Maut helyett fizetendő.",
@@ -222,15 +223,16 @@ export const SPECIALS: SpecialToll[] = [
     id: "si-karavanke", name: "Karavanke alagút – szlovén oldal (SI)", country: "SI",
     test: (n, cc, [, y]) => cc === "SI" && y > 46.42 && any(n, /karavank|^A ?2$/i) && y < 46.47,
     minKm: 1.5, sectionKm: 4, replacesKm: true,
-    fees: [3, 5.92, 6.56, 13.13],
-    note: "Átalánydíj áthaladásonként: R2 5,92 / R3 6,56 / R4 13,13 € (másodlagos forrás).",
+    fees: [2.46, 4.85, 5.38, 10.76],
+    note: "Átalánydíj áthaladásonként, ÁFA-val: R2 5,92 / R3 6,56 / R4 13,13 € (nettó R4 10,76 €; másodlagos forrás).",
     confidence: "source", asOf: "2026",
   },
   // --- csak figyelmeztetés: a díj nincs bekalkulálva ---
   { id: "lascera", name: "Munt la Schera alagút (CH–IT)", country: "CH/IT", test: (n) => any(n, /munt la schera/i), minKm: 1, note: "3,60 m magasságkorlát, egysávos – 4 m-es nyerges szerelvénynek alkalmatlan!", confidence: "estimate", asOf: "" },
 ];
 
-const AT_EURO: Record<Vehicle["euro"], number> = { euro6: 1, euro5: 60.24 / 57.24, euro4: 63.24 / 57.24, older: 66.54 / 57.24 };
+// a szakaszdíjaknál (Sondermaut) az EURO-osztály csak a külső költség részt érinti – ASFINAG 2026-os táblázat aránya
+const AT_EURO: Record<Vehicle["euro"], number> = { euro6: 1, euro5: 1.003, euro4: 1.038, older: 1.058 };
 
 /** a szakaszdíj; részleges áthaladásnál a megtett km arányában */
 export function specialFee(sp: SpecialToll, v: Vehicle, km?: number): number {

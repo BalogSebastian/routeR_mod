@@ -145,6 +145,16 @@ interface SimOut {
  * Menetrend-szimuláció az útvonal mentén. `plan` = null: automatikus tervezés
  * (szünetek / pihenők a legkorábbi jogszerű érkezéshez), különben a megadott megállókkal.
  */
+/**
+ * Hány napi pihenő kell még `rem` óra vezetéshez, ha `ext` darab 10 órás nap használható fel
+ * (a mai nap után; a legjobb választással).
+ */
+function restsAfter(rem: number, ext: number): number {
+  if (rem <= 1e-6) return 0;
+  const today = (cap: number, left: number): number => (rem <= cap + 0.01 ? 1 : 1 + restsAfter(rem - cap, left));
+  return Math.min(today(MAX_DAY_H, ext), ext > 0 ? today(EXT_DAY_H, ext - 1) : Infinity);
+}
+
 function simulate(route: RouteResult, plan: PlanStop[] | null, o: SchedOpts, weight: number): SimOut | null {
   const depMs = Date.parse(`${o.departure}:00Z`);
   if (!Number.isFinite(depMs)) return null;
@@ -319,7 +329,11 @@ function simulate(route: RouteResult, plan: PlanStop[] | null, o: SchedOpts, wei
       // 10 órás nap (hetente 2×): ha így elérjük a célt vagy a kompot
       if (flex && extUsed < 2 && dayLimit === MAX_DAY_H) {
         const reach = Math.min(remaining, hFerry - hNow);
-        if (dayDrive + reach > MAX_DAY_H + 0.01 && dayDrive + reach <= EXT_DAY_H) { dayLimit = EXT_DAY_H; extUsed++; }
+        const finishes = dayDrive + reach > MAX_DAY_H + 0.01 && dayDrive + reach <= EXT_DAY_H;
+        // előretekintés: ha a mai 10 órás nap egy teljes napi pihenőt spórol meg a hátralévő úton
+        const saves = !finishes && hFerry === Infinity && dayDrive < EXT_DAY_H &&
+          restsAfter(remaining - (EXT_DAY_H - dayDrive), 1 - extUsed) < restsAfter(remaining - (MAX_DAY_H - dayDrive), 2 - extUsed);
+        if (finishes || saves) { dayLimit = EXT_DAY_H; extUsed++; }
       }
       const hBreak = hNow + (MAX_CONT_H - sinceBreak);
       const hDay = hNow + (dayLimit - dayDrive);
@@ -330,7 +344,8 @@ function simulate(route: RouteResult, plan: PlanStop[] | null, o: SchedOpts, wei
         fi++;
         continue;
       }
-      if (hStop >= hTotal - 1e-6) { driveTo(1); break; }
+      // a cél előtti utolsó pár percben nem tartunk 45 perces szünetet (a menetidő-becslés pontosságán belül)
+      if (hStop >= hTotal - 1e-6 || (hBreak < hDay && hTotal - hStop <= 0.1)) { driveTo(1); break; }
       const fStop = fractionAtHours(route, hStop);
       const restsBefore = rests;
       driveTo(fStop);

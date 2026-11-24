@@ -6,6 +6,7 @@ import { ferryPath, ferryPrice, matchFerry, pathKm, splitByFerries, type FerryLi
 import { buildZones, inZone } from "./zones";
 import { activeCrossings, crossingAllowed, nearestOnLine, passesKm } from "./crossings";
 import { waypointCountries } from "./wpcountry";
+import { chunkLong } from "./longroute";
 import { applyPlan, autoPlan } from "./schedule";
 import { buildSections, truckSpeed, type SignAt } from "./sections";
 import { DEFAULT_COSTS } from "./presets";
@@ -227,7 +228,11 @@ async function analyse(parts: Part[], req: RouteRequest, id: number, unavoidable
       for (const e of r.edges) edges.push({ ...e, i0: e.i0 + b0, i1: e.i1 + b0 });
       signs.push(...r.signs.map((x) => ({ ...x, i: x.i + b0 })));
       fullCoords.push(...(fullCoords.length ? r.coords.slice(1) : r.coords));
-      maneuvers.push(...leg.maneuvers.map((m) => ({ text: m.instruction, km: m.length, min: m.time / 60, street: m.street_names?.[0] })));
+      const pi = parts.indexOf(part);
+      const joinBefore = parts[pi - 1]?.kind === "road" && leg === part.trip.legs[0];
+      const joinAfter = parts[pi + 1]?.kind === "road" && leg === part.trip.legs[part.trip.legs.length - 1];
+      const ms = leg.maneuvers.filter((m, mi) => !(joinBefore && mi === 0 && m.length < 0.05) && !(joinAfter && mi === leg.maneuvers.length - 1 && m.length < 0.05));
+      maneuvers.push(...ms.map((m) => ({ text: m.instruction, km: m.length, min: m.time / 60, street: m.street_names?.[0] })));
     }
   }
 
@@ -538,6 +543,21 @@ export async function planRoutes(req: RouteRequest): Promise<PlanResult> {
   const cx = await crossingContext(req);
   const blocked = cx.all.filter((c) => cx.status.get(c.id)?.allowed === false);
   const seg = splitByFerries(req.waypoints);
+  // a szerver 1500 km-es kéréslimitje miatt a hosszú közúti szakaszok darabolva
+  const roadChunks = await Promise.all(seg.roads.map(chunkLong));
+  if (roadChunks.some((c) => c.length > 1)) {
+    const sets = await Promise.all(roadChunks.map((cs) => Promise.all(cs.map((r) => routeRequest(r, req.vehicle, req.options, { alternates: false, blocked })))));
+    const parts: Part[] = [];
+    let ri = 0;
+    let fi = 0;
+    for (const k of seg.order) {
+      if (k === "r") for (const s of sets[ri++]) parts.push({ kind: "road", trip: s.trips[0] });
+      else parts.push({ kind: "ferry", ...seg.ferries[fi++] });
+    }
+    const all = sets.flat();
+    const route = await analyse(parts, req, 0, [...new Set(all.flatMap((s) => s.unavoidable))], cx);
+    return { routes: [route], exclude: all.flatMap((s) => s.exclude).slice(0, 50) };
+  }
   if (!seg.ferries.length) {
     const set = await routeRequest(req.waypoints, req.vehicle, req.options, { blocked });
     const results = await Promise.all(set.trips.map((t, i) => analyse([{ kind: "road", trip: t }], req, i, set.unavoidable, cx)));
