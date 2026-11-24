@@ -1,13 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AuthShell from "@/components/app/AuthShell";
 
 export default function RegisterPage() {
   const [f, setF] = useState({ name: "", email: "", company: "", password: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  // a tesotter.com/routerget űrlapjáról érkező adatok előtöltése (a # után jönnek, szerverre nem kerülnek)
+  useEffect(() => {
+    const h = window.location.hash.slice(1);
+    if (!h) return;
+    const q = new URLSearchParams(h);
+    const pick = (k: string) => (q.get(k) ?? "").slice(0, 200);
+    requestAnimationFrame(() => setF((x) => ({ ...x, name: x.name || pick("name"), email: x.email || pick("email"), company: x.company || pick("company") })));
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+  }, []);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF((x) => ({ ...x, [k]: e.target.value }));
 
   const submit = async (e: React.FormEvent) => {
