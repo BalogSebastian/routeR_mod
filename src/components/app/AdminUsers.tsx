@@ -48,21 +48,21 @@ export default function AdminUsers({ initial, me }: { initial: AdminUser[]; me: 
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm">
-        <span className="text-slate-600">E-mail küldés (jelszó-visszaállítás, értesítők)</span>
+      <div className="flex flex-wrap items-center gap-3 border-2 border-black bg-white px-4 py-3 text-sm">
+        <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-black/55">E-mail küldés (jelszó-visszaállítás, értesítők)</span>
         <button className="btn !py-1.5 !text-xs" onClick={testMail} disabled={mailBusy}>{mailBusy ? "Küldés…" : "✉️ Teszt e-mail küldése"}</button>
         {mail && <span className={`text-xs ${mail.ok ? "text-emerald-700" : "text-rose-700"}`}>{mail.text}</span>}
       </div>
-      {pending > 0 && <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">⏳ <b>{pending}</b> regisztráció vár jóváhagyásra.</div>}
-      {error && <div className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</div>}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-        <ul className="divide-y divide-slate-100">
+      {pending > 0 && <div className="border-l-4 border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-900">⏳ <b>{pending}</b> regisztráció vár jóváhagyásra.</div>}
+      {error && <div className="border-l-4 border-rose-500 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</div>}
+      <div className="overflow-hidden border-2 border-black bg-white">
+        <ul className="divide-y divide-black/10">
           {sorted.map((u) => (
-            <li key={u.id} className={`flex flex-wrap items-center gap-3 px-4 py-3.5 ${busy === u.id ? "opacity-50" : ""}`}>
+            <li key={u.id} className={`flex flex-wrap items-center gap-3 px-4 py-4 transition-colors hover:bg-[#f4f4f1] ${busy === u.id ? "opacity-50" : ""}`}>
               <div className="min-w-0 flex-1 basis-56">
                 <div className="flex items-center gap-2">
-                  <span className="truncate font-semibold text-slate-900">{u.name}</span>
-                  {u.role === "admin" && <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold text-violet-700">ADMIN</span>}
+                  <span className="truncate font-bold text-black">{u.name}</span>
+                  {u.role === "admin" && <span className="bg-black px-1.5 py-0.5 font-mono text-[10px] font-bold text-[#00ff9d]">ADMIN</span>}
                   <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${BADGE[u.status]}`}>{LABEL[u.status]}</span>
                 </div>
                 <div className="truncate text-xs text-slate-500">{u.email}{u.company ? ` · ${u.company}` : ""}</div>

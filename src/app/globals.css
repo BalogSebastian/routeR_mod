@@ -212,6 +212,8 @@ details > summary::-webkit-details-marker { display: none; }
 .rr-marquee { animation: rr-marquee 30s linear infinite; }
 @keyframes rr-truck { 0% { offset-distance: 0%; } 100% { offset-distance: 100%; } }
 .rr-truck { offset-rotate: auto; animation: rr-truck 9s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+@keyframes rr-grow { from { transform: scaleY(0); } to { transform: none; } }
+@keyframes rr-stripes { to { background-position-x: 60px; } }
 @keyframes rr-blink { 50% { opacity: 0; } }
 .rr-blink { animation: rr-blink 1s steps(1) infinite; }
 

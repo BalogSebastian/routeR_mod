@@ -18,10 +18,10 @@ export default function PasswordForm() {
     setBusy(false);
   };
   return (
-    <form onSubmit={submit} className="space-y-3">
+    <form onSubmit={submit} className="space-y-6">
       <label className="block"><span className="label-xs">Jelenlegi jelszó</span><input className="input-lg" type="password" autoComplete="current-password" value={cur} onChange={(e) => setCur(e.target.value)} required /></label>
       <label className="block"><span className="label-xs">Új jelszó</span><input className="input-lg" type="password" autoComplete="new-password" minLength={8} value={next} onChange={(e) => setNext(e.target.value)} required /></label>
-      {msg && <p className={`rounded-xl px-3.5 py-2.5 text-[13px] ${msg.ok ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>{msg.text}</p>}
+      {msg && <p className={`border-l-4 px-3.5 py-2.5 text-[13px] font-medium ${msg.ok ? "border-[#00ff9d] bg-[#00ff9d]/10 text-black" : "border-rose-500 bg-rose-50 text-rose-700"}`}>{msg.text}</p>}
       <button className="btn-primary" disabled={busy || !cur || next.length < 8}>{busy ? "Mentés…" : "Jelszó módosítása"}</button>
     </form>
   );

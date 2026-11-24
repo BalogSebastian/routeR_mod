@@ -1,3 +1,4 @@
+import { PageHead } from "@/components/app/RouteNet";
 import TripsList from "@/components/app/TripsList";
 import { tripEnds, type TripListItem } from "@/components/app/TripCard";
 import { getUser } from "@/lib/server/auth";
@@ -11,11 +12,8 @@ export default async function TripsPage() {
   const rows = await Trip.find({ userId: u._id }).sort({ updatedAt: -1 }).limit(200).select("name summary waypoints favorite updatedAt").lean();
   const trips: TripListItem[] = rows.map((t) => ({ id: String(t._id), name: t.name, updatedAt: new Date(t.updatedAt).toISOString(), summary: t.summary, favorite: !!t.favorite, ...tripEnds(t.waypoints) }));
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-sm text-slate-500">Mentett útvonalak és költségek</p>
-        <h1 className="mt-1 text-[28px] font-semibold tracking-tight text-slate-900">Fuvaraim</h1>
-      </div>
+    <div className="space-y-8">
+      <PageHead kicker="Mentett útvonalak és költségek" title="Fuvaraim" />
       <TripsList initial={trips} />
     </div>
   );

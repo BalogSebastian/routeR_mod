@@ -1,21 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/Brand";
-
-const NET = [
-  "M-40 520 C 120 470, 220 560, 360 480 S 560 380, 760 430",
-  "M-40 250 C 120 290, 260 170, 420 230 S 640 320, 760 190",
-  "M90 -40 C 120 180, 200 320, 230 460 S 290 700, 320 860",
-  "M560 -40 C 520 160, 580 300, 520 460 S 480 700, 510 860",
-  "M-40 700 C 180 650, 340 730, 520 650 S 700 610, 760 660",
-];
-const NODES: [number, number][] = [
-  [230, 460],
-  [360, 480],
-  [420, 230],
-  [520, 460],
-  [520, 650],
-];
-const TRUCK_PATH = "M-40 520 C 120 470, 220 560, 360 480 S 560 380, 760 430";
+import RouteNet from "./RouteNet";
 
 const FEATURES = ["Kamion-routing méret, tömeg és ADR szerint", "Útdíj 27 országban, 2026-os tarifákkal", "Komp, vasút, No-Go zónák", "EU 561/2006 menetrend és ETA"];
 const COUNTRIES = ["HU", "AT", "DE", "CZ", "SK", "PL", "IT", "FR", "ES", "BE", "NL", "DK", "SE", "GB", "SI", "HR", "RO", "BG"];
@@ -26,40 +11,7 @@ export default function AuthShell({ title, subtitle, children, footer }: { title
     <div className="auth-bg flex min-h-dvh flex-col lg:flex-row">
       {/* ---------- bal: fekete, élő panel ---------- */}
       <aside className="relative flex flex-col overflow-hidden bg-[#050505] text-white lg:sticky lg:top-0 lg:h-dvh lg:w-[52%]">
-        <svg aria-hidden viewBox="0 0 720 800" preserveAspectRatio="xMidYMid slice" className="pointer-events-none absolute inset-0 h-full w-full">
-          <defs>
-            <pattern id="as-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M40 0H0V40" fill="none" stroke="white" strokeOpacity="0.04" />
-            </pattern>
-            <radialGradient id="as-glow" cx="70%" cy="20%" r="60%">
-              <stop offset="0%" stopColor="#00ff9d" stopOpacity="0.22" />
-              <stop offset="100%" stopColor="#00ff9d" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-          <rect width="720" height="800" fill="url(#as-grid)" />
-          <rect width="720" height="800" fill="url(#as-glow)" />
-          {NET.map((d, i) => (
-            <g key={i}>
-              <path d={d} fill="none" stroke="white" strokeOpacity="0.09" strokeWidth={i % 2 ? 1 : 2} pathLength={1} className="rr-draw" style={{ animationDelay: `${0.2 + i * 0.15}s` }} />
-              <path d={d} fill="none" stroke="#00ff9d" strokeWidth="3" strokeLinecap="round" pathLength={1} className="rr-flow" style={{ animationDuration: `${6 + i * 1.4}s`, animationDelay: `${i * -1.7}s`, filter: "drop-shadow(0 0 6px #00ff9d)" }} />
-            </g>
-          ))}
-          {NODES.map(([x, y], i) => (
-            <g key={i}>
-              <circle cx={x} cy={y} r="14" fill="none" stroke="#00ff9d" strokeWidth="1.5" className="rr-ping" style={{ animationDelay: `${i * 0.4}s` }} />
-              <circle cx={x} cy={y} r="4" fill="#00ff9d" />
-            </g>
-          ))}
-        </svg>
-        {/* kamion a fő útvonalon */}
-        <div aria-hidden className="pointer-events-none absolute left-0 top-0 hidden h-full w-full lg:block">
-          <svg viewBox="0 0 720 800" preserveAspectRatio="xMidYMid slice" className="h-full w-full">
-            <g className="rr-truck" style={{ offsetPath: `path("${TRUCK_PATH}")` }}>
-              <rect x="-16" y="-7" width="22" height="14" rx="2" fill="white" />
-              <rect x="7" y="-6.5" width="10" height="13" rx="3" fill="#00ff9d" />
-            </g>
-          </svg>
-        </div>
+        <RouteNet id="as" truck />
 
         <div className="relative z-10 flex items-center justify-between px-6 py-5 sm:px-10 lg:py-8">
           <Link href="/" className="flex items-center gap-2.5">

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import AdminUsers, { type AdminUser } from "@/components/app/AdminUsers";
+import { PageHead } from "@/components/app/RouteNet";
 import { getUser } from "@/lib/server/auth";
 import { getDb } from "@/lib/server/models";
 
@@ -19,11 +20,8 @@ export default async function AdminPage() {
     createdAt: new Date(u.createdAt).toISOString(), lastLoginAt: u.lastLoginAt ? new Date(u.lastLoginAt).toISOString() : undefined, trips: by.get(String(u._id)) ?? 0,
   }));
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-sm text-slate-500">Regisztrációk jóváhagyása és jogosultságok</p>
-        <h1 className="mt-1 text-[28px] font-semibold tracking-tight text-slate-900">Felhasználók</h1>
-      </div>
+    <div className="space-y-8">
+      <PageHead kicker="Regisztrációk jóváhagyása és jogosultságok" title="Felhasználók" />
       <AdminUsers initial={initial} me={String(me._id)} />
     </div>
   );

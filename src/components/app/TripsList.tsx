@@ -53,27 +53,27 @@ export default function TripsList({ initial }: { initial: TripListItem[] }) {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
         <input className="input-lg max-w-sm" placeholder="Keresés: név, város, útszám…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <button onClick={() => setOnlyFav((v) => !v)} className={`rounded-full border px-3.5 py-2 text-sm font-semibold transition ${onlyFav ? "border-amber-300 bg-amber-50 text-amber-700" : "border-slate-200 bg-white text-slate-600 hover:border-amber-300"}`}>★ Kedvencek</button>
-        <span className="text-sm text-slate-500">{shown.length} fuvar</span>
+        <button onClick={() => setOnlyFav((v) => !v)} className={`border-2 px-4 py-2 font-mono text-[12px] font-bold uppercase tracking-[0.12em] transition ${onlyFav ? "border-black bg-black text-[#00ff9d]" : "border-black/20 bg-white text-black hover:border-black"}`}>★ Kedvencek</button>
+        <span className="font-mono text-[12px] font-bold uppercase tracking-[0.12em] text-black/45">{shown.length} fuvar</span>
         {msg && <span className="text-sm text-rose-600">{msg}</span>}
         <Link href="/planner" className="btn-primary ml-auto">+ Új útvonal</Link>
       </div>
       {shown.length ? (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {shown.map((t) => (
             <div key={t.id} className={`relative ${busy === t.id ? "opacity-50" : ""}`}>
               <TripCard t={t} />
-              <div className="mt-1.5 flex justify-end gap-3 px-1 text-xs">
-                <button className={t.favorite ? "font-semibold text-amber-600" : "text-slate-500 hover:text-amber-600"} onClick={() => toggleFav(t)}>{t.favorite ? "★ Kedvenc" : "☆ Kedvenc"}</button>
-                <button className="text-slate-500 hover:text-violet-700" onClick={() => duplicate(t)}>⧉ Duplikálás</button>
-                <button className="text-slate-500 hover:text-violet-700" onClick={() => rename(t)}>Átnevezés</button>
-                <button className="text-slate-500 hover:text-rose-600" onClick={() => remove(t)}>Törlés</button>
+              <div className="mt-2 flex justify-end gap-4 px-1 font-mono text-[11px] font-bold uppercase tracking-wide">
+                <button className={t.favorite ? "text-black" : "text-black/40 hover:text-black"} onClick={() => toggleFav(t)}>{t.favorite ? "★ Kedvenc" : "☆ Kedvenc"}</button>
+                <button className="text-black/40 hover:text-black" onClick={() => duplicate(t)}>⧉ Duplikálás</button>
+                <button className="text-black/40 hover:text-black" onClick={() => rename(t)}>Átnevezés</button>
+                <button className="text-black/40 hover:text-rose-600" onClick={() => remove(t)}>Törlés</button>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <p className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">{trips.length ? (onlyFav ? "Még nincs kedvenc fuvarod – jelölj meg egyet a ☆ gombbal." : "Nincs találat.") : "Még nincs mentett fuvarod."}</p>
+        <p className="border-2 border-dashed border-black/25 bg-white p-12 text-center text-sm text-black/55">{trips.length ? (onlyFav ? "Még nincs kedvenc fuvarod – jelölj meg egyet a ☆ gombbal." : "Nincs találat.") : "Még nincs mentett fuvarod."}</p>
       )}
     </div>
   );

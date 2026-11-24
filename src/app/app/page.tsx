@@ -1,5 +1,6 @@
 import Link from "next/link";
 import TripCard, { tripEnds, type TripListItem } from "@/components/app/TripCard";
+import RouteNet from "@/components/app/RouteNet";
 import { eur, km } from "@/lib/format";
 import { getUser } from "@/lib/server/auth";
 import { getDb } from "@/lib/server/models";
@@ -56,120 +57,138 @@ export default async function Dashboard() {
     "M12 3v18M16 7.5c0-1.7-1.8-3-4-3s-4 1.3-4 3 1.8 2.6 4 3 4 1.3 4 3-1.8 3-4 3-4-1.3-4-3",
     "M3 7h18M6 7v12h12V7M9 7V4h6v3",
   ];
-  const tones = ["from-violet-500 to-indigo-500", "from-sky-500 to-blue-500", "from-emerald-500 to-teal-500", "from-amber-500 to-orange-500"];
+  const card = "border-2 border-black bg-white transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#00ff9d]";
+  const kicker = "font-mono text-[10.5px] font-bold uppercase tracking-[0.25em] text-black/45";
+  const head = "text-[15px] font-black uppercase tracking-tight text-black";
 
   return (
     <div className="space-y-8">
-      <section className="driver-hero relative overflow-hidden rounded-[28px] px-6 py-7 text-white shadow-xl shadow-violet-900/20 md:px-9 md:py-9">
-        <div className="relative z-10 flex flex-wrap items-end justify-between gap-5">
+      {/* fejléc: fekete panel élő útvonalhálózattal */}
+      <section className="rr-up relative overflow-hidden bg-[#050505] px-6 py-9 text-white md:px-10 md:py-12">
+        <RouteNet id="dash" truck dim={0.85} />
+        <div className="relative z-10 flex flex-wrap items-end justify-between gap-8">
           <div>
-            <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-violet-200">Irányítópult</p>
-            <h1 className="mt-2 text-[32px] font-extrabold leading-tight tracking-tight md:text-[38px]">Szia, {first}! 👋</h1>
-            <p className="mt-2 max-w-md text-[14.5px] leading-relaxed text-violet-100/90">
+            <div className="flex items-center gap-3">
+              <span className="h-[2px] w-10 bg-[#00ff9d]" />
+              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.35em] text-[#00ff9d]">Irányítópult</span>
+            </div>
+            <h1 className="mt-5 font-black uppercase leading-[0.9] tracking-tighter" style={{ fontFamily: "var(--font-brand)" }}>
+              <span className="block overflow-hidden pt-[0.08em] text-[clamp(2.6rem,6vw,4.8rem)]">
+                <span className="rr-rise" style={{ animationDelay: "0.1s" }}>Szia,</span>
+              </span>
+              <span className="block overflow-hidden pt-[0.08em] text-[clamp(2.6rem,6vw,4.8rem)] text-transparent [-webkit-text-stroke:1.5px_white]">
+                <span className="rr-rise" style={{ animationDelay: "0.22s" }}>{first}!</span>
+              </span>
+            </h1>
+            <p className="rr-up mt-5 max-w-md text-[15px] leading-relaxed text-white/65" style={{ animationDelay: "0.35s" }}>
               {a.n ? `${a.n} mentett fuvarod van, összesen ${km(a.km)} tervezett úttal.` : "Tervezd meg az első kamionos útvonalad – útdíjjal, tilalmakkal, pihenőkkel."}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2.5">
-          {trips[0] && (
-            <Link href={`/planner?trip=${trips[0].id}&driver=1`} className="inline-flex items-center gap-2 rounded-2xl border border-white/25 bg-white/10 px-5 py-3.5 text-[14.5px] font-bold text-white backdrop-blur transition hover:bg-white/20 active:scale-[0.98]">
-              🚚 Sofőr-nézet · legutóbbi fuvar
+          <div className="rr-up flex w-full flex-col gap-4 sm:w-auto sm:flex-row" style={{ animationDelay: "0.45s" }}>
+            {trips[0] && (
+              <Link href={`/planner?trip=${trips[0].id}&driver=1`} className="inline-flex items-center justify-center gap-2 border-2 border-white/40 px-6 py-4 text-[12.5px] font-extrabold uppercase tracking-[0.16em] text-white transition hover:border-white hover:bg-white hover:text-black">
+                🚚 Sofőr-nézet · legutóbbi
+              </Link>
+            )}
+            <Link href="/planner" className="inline-flex items-center justify-center gap-2 bg-[#00ff9d] px-7 py-4 text-[12.5px] font-extrabold uppercase tracking-[0.16em] text-black shadow-[6px_6px_0_0_#fff] transition-all duration-300 hover:translate-x-[6px] hover:translate-y-[6px] hover:shadow-none">
+              <span className="text-lg leading-none">＋</span> Új útvonal tervezése
             </Link>
-          )}
-          <Link href="/planner" className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-[14.5px] font-extrabold text-violet-700 shadow-lg shadow-violet-950/25 transition hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.98]">
-            <span className="text-lg leading-none">＋</span> Új útvonal tervezése
-          </Link>
           </div>
         </div>
       </section>
 
-      <section className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+      {/* számok */}
+      <section className="grid grid-cols-2 border-2 border-black bg-white lg:grid-cols-4">
         {stats.map((s, i) => (
-          <div key={s.k} className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-violet-900/[0.04]">
-            <span className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-md ${tones[i]}`}>
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d={icons[i]} /></svg>
-            </span>
-            <div className="mt-4 text-[26px] font-extrabold leading-none tracking-tight tabular-nums text-slate-900">{s.v}</div>
-            <div className="mt-2 text-[11.5px] font-bold uppercase tracking-[0.12em] text-slate-500">{s.k}</div>
+          <div key={s.k} className={`rr-up group relative overflow-hidden p-5 md:p-6 ${i % 2 === 0 ? "border-r-2 border-black" : ""} ${i < 2 ? "border-b-2 border-black lg:border-b-0" : ""} lg:border-r-2 lg:last:border-r-0`} style={{ animationDelay: `${0.1 + i * 0.08}s` }}>
+            <span aria-hidden className="absolute inset-0 origin-bottom scale-y-0 bg-black transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-y-100" />
+            <div className="relative flex items-center justify-between">
+              <span className="font-mono text-[11px] font-bold text-black/30 transition-colors group-hover:text-[#00ff9d]">0{i + 1}</span>
+              <svg viewBox="0 0 24 24" className="h-5 w-5 text-black transition-colors group-hover:text-[#00ff9d]" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d={icons[i]} /></svg>
+            </div>
+            <div className="relative mt-5 text-[clamp(1.7rem,3vw,2.5rem)] font-black leading-none tracking-tighter tabular-nums text-black transition-colors group-hover:text-white" style={{ fontFamily: "var(--font-brand)" }}>{s.v}</div>
+            <div className="relative mt-2 font-mono text-[10.5px] font-bold uppercase tracking-[0.18em] text-black/50 transition-colors group-hover:text-white/60">{s.k}</div>
           </div>
         ))}
       </section>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_330px]">
-        <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-violet-900/[0.04]">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-[16px] font-extrabold tracking-tight text-slate-900">Havi fuvarköltség</h2>
-            <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">utolsó 6 hónap</span>
+      <div className="grid gap-6 lg:grid-cols-[1fr_330px]">
+        <section className={`${card} p-5 md:p-6`}>
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className={head}>Havi fuvarköltség</h2>
+            <span className={kicker}>utolsó 6 hónap</span>
           </div>
-          <div className="flex h-40 items-end gap-3">
-            {months.map((m) => (
+          <div className="flex h-44 items-end gap-3">
+            {months.map((m, i) => (
               <div key={m.key} className="group flex h-full flex-1 flex-col items-center justify-end gap-2" title={`${m.n} fuvar · ${eur(m.eur)} · ${km(m.km)}`}>
-                <span className="text-[11px] font-bold tabular-nums text-slate-500 opacity-0 transition group-hover:opacity-100">{m.eur ? eur(m.eur) : ""}</span>
-                <div className="w-full rounded-xl bg-gradient-to-t from-violet-600 to-violet-400 transition group-hover:from-violet-700" style={{ height: `${Math.max(m.eur ? 8 : 3, (m.eur / maxEur) * 100)}%`, opacity: m.eur ? 1 : 0.2 }} />
-                <span className="text-[11.5px] font-semibold capitalize text-slate-500">{m.label}</span>
+                <span className="font-mono text-[11px] font-bold tabular-nums text-black/60 opacity-0 transition group-hover:opacity-100">{m.eur ? eur(m.eur) : ""}</span>
+                <div className="w-full origin-bottom bg-black transition-colors duration-300 group-hover:bg-[#00ff9d] [animation:rr-grow_0.9s_cubic-bezier(0.16,1,0.3,1)_both]" style={{ height: `${Math.max(m.eur ? 8 : 3, (m.eur / maxEur) * 100)}%`, opacity: m.eur ? 1 : 0.12, animationDelay: `${0.3 + i * 0.07}s` }} />
+                <span className="font-mono text-[11px] font-bold uppercase text-black/45">{m.label}</span>
               </div>
             ))}
           </div>
         </section>
-        <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-violet-900/[0.04]">
-          <h2 className="mb-4 text-[16px] font-extrabold tracking-tight text-slate-900">Leggyakoribb útvonalak</h2>
+        <section className={`${card} p-5 md:p-6`}>
+          <h2 className={`${head} mb-5`}>Leggyakoribb útvonalak</h2>
           {topRoutes.length ? (
-            <ol className="space-y-2.5">
+            <ol className="divide-y divide-black/10 border-y border-black/10">
               {topRoutes.map((r, i) => (
-                <li key={r.label} className="flex items-center gap-3 text-sm">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-xs font-extrabold text-violet-700">{i + 1}</span>
-                  <span className="min-w-0 flex-1"><span className="block truncate font-bold text-slate-800">{r.label}</span><span className="text-xs text-slate-500">{r.n}× · átlag {eur(r.eur / r.n)}</span></span>
+                <li key={r.label} className="flex items-center gap-3 py-3 text-sm">
+                  <span className="font-mono text-[13px] font-black text-black/25">0{i + 1}</span>
+                  <span className="min-w-0 flex-1"><span className="block truncate font-bold text-black">{r.label}</span><span className="font-mono text-[11px] text-black/45">{r.n}× · átlag {eur(r.eur / r.n)}</span></span>
                 </li>
               ))}
             </ol>
-          ) : <p className="text-sm text-slate-500">Itt jelennek meg a leggyakrabban tervezett útvonalaid.</p>}
+          ) : <p className="text-sm leading-relaxed text-black/50">Itt jelennek meg a leggyakrabban tervezett útvonalaid.</p>}
         </section>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_330px]">
         <section>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-[18px] font-extrabold tracking-tight text-slate-900">Kedvencek és legutóbbi fuvarok</h2>
-            {a.n > 6 && <Link href="/app/trips" className="rounded-full bg-violet-50 px-3.5 py-1.5 text-[13px] font-bold text-violet-700 transition hover:bg-violet-100">Mind ({a.n}) →</Link>}
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <h2 className="text-[clamp(1.4rem,2.6vw,2rem)] font-black uppercase leading-none tracking-tighter text-black" style={{ fontFamily: "var(--font-brand)" }}>Kedvencek és legutóbbi fuvarok</h2>
+            {a.n > 6 && <Link href="/app/trips" className="shrink-0 border-b-[3px] border-[#00ff9d] font-mono text-[12px] font-bold uppercase tracking-[0.15em] text-black transition hover:bg-[#00ff9d]">Mind ({a.n}) →</Link>}
           </div>
           {trips.length ? (
-            <div className="grid gap-4 sm:grid-cols-2">{trips.map((t) => <TripCard key={t.id} t={t} />)}</div>
+            <div className="grid gap-5 sm:grid-cols-2">{trips.map((t) => <TripCard key={t.id} t={t} />)}</div>
           ) : (
-            <div className="rounded-3xl border-2 border-dashed border-violet-200 bg-white/70 p-12 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-violet-100 text-3xl">🛣️</div>
-              <p className="mt-4 text-[16px] font-extrabold text-slate-900">Még nincs mentett fuvarod</p>
-              <p className="mx-auto mt-1.5 max-w-xs text-sm leading-relaxed text-slate-500">Tervezz egy útvonalat, és mentsd el – itt mindig megtalálod.</p>
-              <Link href="/planner" className="btn-primary mt-6 !rounded-2xl !px-6 !py-3">Útvonal tervezése</Link>
+            <div className="relative overflow-hidden border-2 border-dashed border-black/30 bg-white p-12 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center bg-[#00ff9d] text-3xl shadow-[5px_5px_0_0_#000]">🛣️</div>
+              <p className="mt-6 text-[20px] font-black uppercase tracking-tight text-black" style={{ fontFamily: "var(--font-brand)" }}>Még nincs mentett fuvarod</p>
+              <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-black/55">Tervezz egy útvonalat, és mentsd el – itt mindig megtalálod.</p>
+              <Link href="/planner" className="btn-primary mt-7">Útvonal tervezése</Link>
             </div>
           )}
         </section>
 
-        <aside className="space-y-5">
-          <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-violet-900/[0.04]">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-[16px] font-extrabold tracking-tight text-slate-900">Járműveim</h2>
-              <Link href="/planner" className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700 transition hover:bg-violet-100">Kezelés</Link>
+        <aside className="space-y-6">
+          <section className={`${card} p-5 md:p-6`}>
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className={head}>Járműveim</h2>
+              <Link href="/planner" className="border-b-2 border-[#00ff9d] font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-black transition hover:bg-[#00ff9d]">Kezelés</Link>
             </div>
             {fleet.length ? (
-              <ul className="space-y-2">
+              <ul className="divide-y divide-black/10 border-y border-black/10">
                 {fleet.slice(0, 5).map((f) => (
-                  <li key={f.id} className="flex items-center gap-3 rounded-2xl bg-slate-50 px-3 py-2.5 text-sm">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-lg shadow-sm">🚛</span>
+                  <li key={f.id} className="flex items-center gap-3 py-3 text-sm">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-black text-lg">🚛</span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-bold text-slate-800">{f.name}{f.id === defId && <span className="ml-1.5 rounded-md bg-violet-100 px-1.5 py-0.5 text-[10px] font-extrabold text-violet-700">alap</span>}</span>
-                      <span className="block text-xs text-slate-500">{f.v.weight} t · {f.v.height} m</span>
+                      <span className="block truncate font-bold text-black">{f.name}{f.id === defId && <span className="ml-1.5 bg-[#00ff9d] px-1.5 py-0.5 font-mono text-[9.5px] font-extrabold uppercase text-black">alap</span>}</span>
+                      <span className="block font-mono text-[11px] text-black/45">{f.v.weight} t · {f.v.height} m</span>
                     </span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm leading-relaxed text-slate-500">Még nincs mentett járműved. A tervezőben a jármű-kártyán adhatsz hozzá flottát.</p>
+              <p className="text-sm leading-relaxed text-black/55">Még nincs mentett járműved. A tervezőben a jármű-kártyán adhatsz hozzá flottát.</p>
             )}
           </section>
 
-          <section className="driver-hero relative overflow-hidden rounded-3xl p-6 text-white shadow-lg shadow-violet-900/20">
-            <div className="relative z-10">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-violet-100">💡 Tipp</div>
-              <p className="mt-3 text-[14px] font-medium leading-relaxed text-violet-50">Az útvonal a térképen megfogható és húzható, a szünetek a valós kamionparkolókhoz illeszthetők – és a kész fuvart egy linkkel elküldheted a sofőrnek.</p>
+          <section className="relative overflow-hidden bg-[#00ff9d] p-6 text-black">
+            <div aria-hidden className="pointer-events-none absolute inset-0 opacity-15 [background-image:repeating-linear-gradient(90deg,black_0_2px,transparent_2px_60px)] [animation:rr-stripes_3s_linear_infinite]" />
+            <div className="relative">
+              <div className="font-mono text-[11px] font-black uppercase tracking-[0.25em]">💡 Tipp</div>
+              <p className="mt-3 text-[15px] font-semibold leading-relaxed">Az útvonal a térképen megfogható és húzható, a szünetek a valós kamionparkolókhoz illeszthetők – és a kész fuvart egy linkkel elküldheted a sofőrnek.</p>
             </div>
           </section>
         </aside>

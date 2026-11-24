@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo, Wordmark } from "@/components/Brand";
 import LogoutButton from "./LogoutButton";
+import RouteNet from "./RouteNet";
 import WelcomeLetter from "./WelcomeLetter";
 
 const NAV = [
@@ -26,44 +27,46 @@ export default function AppShell({ user, children }: { user: { name: string; ema
   return (
     <div className="min-h-dvh bg-[#f4f4f1] md:flex">
       <WelcomeLetter name={user.name} email={user.email} />
-      <aside className="app-side hidden w-[264px] shrink-0 flex-col px-4 py-6 text-white md:sticky md:top-0 md:flex md:h-dvh">
-        <Link href="/app" className="flex items-center gap-2.5 px-2">
+      <aside className="app-side relative hidden w-[264px] shrink-0 flex-col overflow-hidden px-4 py-6 text-white md:sticky md:top-0 md:flex md:h-dvh">
+        <RouteNet id="side" dim={0.35} />
+        <Link href="/app" className="relative z-10 flex items-center gap-2.5 px-2">
           <Logo className="h-9 w-9" />
           <span className="brand-word inline-flex items-baseline gap-2">
             <span className="text-[22px] leading-none text-white">route<b className="text-[#00ff9d]">R</b></span>
             <span className="whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.18em] text-white/40">by tesotter</span>
           </span>
         </Link>
-        <nav className="mt-10 space-y-1">
+        <div className="relative z-10 mt-10 mb-3 px-3 font-mono text-[10px] font-bold uppercase tracking-[0.3em] text-white/30">Menü</div>
+        <nav className="relative z-10 space-y-1">
           {items.map((n) => (
-            <Link key={n.href} href={n.href} className={`group flex items-center gap-3 rounded-2xl px-3.5 py-3 text-[14px] font-semibold transition ${active(n.href) ? "bg-[#00ff9d] text-black shadow-[0_0_24px_rgba(0,255,157,0.25)]" : "text-white/60 hover:bg-white/[0.07] hover:text-white"}`}>
+            <Link key={n.href} href={n.href} className={`group flex items-center gap-3 px-3.5 py-3 text-[12.5px] font-extrabold uppercase tracking-[0.12em] transition ${active(n.href) ? "bg-[#00ff9d] text-black shadow-[4px_4px_0_0_#fff]" : "text-white/60 hover:translate-x-1 hover:bg-white/[0.06] hover:text-white"}`}>
               <Icon d={n.icon} />{n.label}
-              {active(n.href) && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-black" />}
+              {active(n.href) && <span className="ml-auto font-mono text-[13px]">→</span>}
             </Link>
           ))}
         </nav>
-        <div className="mt-auto rounded-3xl border border-white/10 bg-white/[0.07] p-3.5 backdrop-blur">
+        <div className="relative z-10 mt-auto border border-white/15 bg-black/60 p-3.5 backdrop-blur">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#00ff9d] text-sm font-extrabold text-black">{initials}</span>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#00ff9d] font-mono text-sm font-black text-black">{initials}</span>
             <div className="min-w-0">
               <div className="truncate text-[14px] font-bold">{user.name}</div>
               <div className="truncate text-[11.5px] text-white/45">{user.email}</div>
             </div>
           </div>
-          <LogoutButton className="mt-3 w-full rounded-xl bg-white/10 py-2 text-xs font-bold text-white/80 transition hover:bg-[#00ff9d] hover:text-black" />
+          <LogoutButton className="mt-3 w-full border border-white/20 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-white/75 transition hover:border-[#00ff9d] hover:bg-[#00ff9d] hover:text-black" />
         </div>
       </aside>
 
       <div className="min-w-0 flex-1">
         {/* mobil felső sáv */}
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur md:hidden">
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b-2 border-black bg-white/95 px-4 py-3 backdrop-blur md:hidden">
           <Link href="/app" className="flex items-center gap-2"><Logo className="h-8 w-8" /><Wordmark /></Link>
-          <LogoutButton className="text-xs font-semibold text-violet-600" />
+          <LogoutButton className="border-b-2 border-[#00ff9d] font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-black" />
         </header>
         <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 md:px-10 md:py-10">{children}</main>
-        <nav className="fixed inset-x-3 bottom-3 z-20 flex rounded-3xl border border-white/10 bg-[#0a0a0a]/95 p-1.5 shadow-2xl shadow-black/40 backdrop-blur md:hidden">
+        <nav className="fixed inset-x-3 bottom-3 z-20 flex border-2 border-black bg-[#0a0a0a]/95 p-1.5 shadow-[5px_5px_0_0_#00ff9d] backdrop-blur md:hidden">
           {items.map((n) => (
-            <Link key={n.href} href={n.href} className={`flex flex-1 flex-col items-center gap-1 rounded-2xl py-2 text-[10px] font-semibold transition ${active(n.href) ? "bg-[#00ff9d] text-black" : "text-white/55"}`}>
+            <Link key={n.href} href={n.href} className={`flex flex-1 flex-col items-center gap-1 py-2 text-[9.5px] font-bold uppercase tracking-wide transition ${active(n.href) ? "bg-[#00ff9d] text-black" : "text-white/55"}`}>
               <Icon d={n.icon} />{n.label}
             </Link>
           ))}
