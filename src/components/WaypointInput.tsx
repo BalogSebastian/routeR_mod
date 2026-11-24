@@ -58,7 +58,7 @@ export default function WaypointInput({ badge, badgeClass, placeholder, value, p
 
   return (
     <div className="relative flex items-center gap-2">
-      <span className={`relative z-[1] flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ring-4 ring-white dark:ring-slate-900 ${badgeClass}`}>{badge}</span>
+      <span className={`relative z-[1] flex h-[28px] w-[28px] shrink-0 items-center justify-center text-xs font-black text-white ring-4 ring-white dark:ring-slate-900 ${badgeClass}`}>{badge}</span>
       <div className="relative min-w-0 flex-1">
         <input
           value={text}
@@ -66,16 +66,16 @@ export default function WaypointInput({ badge, badgeClass, placeholder, value, p
           onFocus={() => results.length && !value && setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder={placeholder}
-          className={`field w-full pr-8 ${value ? "!border-emerald-500/50 !bg-emerald-50/50 dark:!bg-emerald-950/20" : ""}`}
+          className={`field w-full pr-8 ${value ? "!border-black/60 !bg-[#00ff9d]/[0.08] dark:!bg-emerald-950/20" : ""}`}
         />
-        {busy && <span className="absolute right-2.5 top-2.5 h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />}
+        {busy && <span className="absolute right-2.5 top-2.5 h-4 w-4 animate-spin rounded-full border-2 border-black/15 border-t-black" />}
         {open && results.length > 0 && (
-          <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-slate-200 bg-white text-sm shadow-lg dark:border-slate-700 dark:bg-slate-800">
+          <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-none border-2 border-black bg-white text-sm shadow-[5px_5px_0_0_#00ff9d] dark:border-slate-700 dark:bg-slate-800">
             {results.map((r, i) => (
               <li key={i}>
                 <button
                   type="button"
-                  className="block w-full px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700"
+                  className="block w-full px-3 py-2 text-left hover:bg-[#00ff9d] dark:hover:bg-slate-700"
                   onMouseDown={(e) => {
                     e.preventDefault();
                     setText(r.label);
@@ -104,12 +104,12 @@ export default function WaypointInput({ badge, badgeClass, placeholder, value, p
         type="button"
         title="Pont kijelölése a térképen"
         onClick={onPickToggle}
-        className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg border transition ${picking ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800"}`}
+        className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-none border-2 transition ${picking ? "border-black bg-[#00ff9d] text-black" : "border-black/15 bg-white text-black/55 hover:border-black hover:text-black dark:border-slate-700 dark:bg-slate-800"}`}
       >
         <Ico name="crosshair" className="h-4 w-4" />
       </button>
       {onRemove && (
-        <button type="button" title="Útpont törlése" onClick={onRemove} className="flex h-[34px] w-6 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:text-rose-600"><Ico name="x" className="h-4 w-4" /></button>
+        <button type="button" title="Útpont törlése" onClick={onRemove} className="flex h-[34px] w-6 shrink-0 items-center justify-center text-black/35 hover:text-rose-600"><Ico name="x" className="h-4 w-4" /></button>
       )}
     </div>
   );

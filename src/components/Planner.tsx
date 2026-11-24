@@ -15,6 +15,7 @@ import { FERRIES, ferryById, ferryWaypoint } from "@/lib/ferries";
 import { COUNTRY_NAMES } from "@/lib/country-names";
 import { dt, dur, eur, flag, km } from "@/lib/format";
 import LogoutButton from "./app/LogoutButton";
+import RouteNet from "./app/RouteNet";
 import { BUILTIN_CROSSINGS, MODE_LABEL } from "@/lib/crossings";
 import type { BorderCrossing, CargoKind, CostInputs, EuroClass, FerryOverride, LngLat, NoGo, RouteOptions, RouteResult, Vehicle, Waypoint } from "@/lib/types";
 
@@ -645,38 +646,40 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
 
   return (
     <div className="flex h-dvh w-full flex-col md:flex-row">
-      <nav className="hidden w-[68px] shrink-0 flex-col items-center gap-1.5 border-r border-slate-200 bg-white py-4 md:flex">
-        <Link href="/app" title="routeR – irányítópult" className="mb-4"><Logo className="h-9 w-9" /></Link>
+      <nav className="relative hidden w-[68px] shrink-0 flex-col items-center gap-1.5 overflow-hidden bg-[#050505] py-4 md:flex">
+        <Link href="/app" title="routeR – irányítópult" className="relative mb-6"><Logo className="h-9 w-9" /></Link>
         {RAIL.map((n) => (
-          <Link key={n.href} href={n.href} title={n.label} className={`flex h-11 w-11 items-center justify-center rounded-xl transition ${n.active ? "bg-violet-50 text-violet-700" : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"}`}>
+          <Link key={n.href} href={n.href} title={n.label} className={`relative flex h-11 w-11 items-center justify-center transition ${n.active ? "bg-[#00ff9d] text-black shadow-[3px_3px_0_0_#fff]" : "text-white/50 hover:bg-white/10 hover:text-white"}`}>
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={n.icon} /></svg>
           </Link>
         ))}
-        <LogoutButton className="mt-auto flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-rose-600">
+        <LogoutButton className="relative mt-auto flex h-11 w-11 items-center justify-center text-white/40 hover:bg-white/10 hover:text-rose-400">
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /></svg>
         </LogoutButton>
       </nav>
-      <aside className={`z-10 flex w-full flex-col bg-slate-50 shadow-2xl shadow-violet-900/10 md:w-[460px] md:shrink-0 dark:bg-slate-950 ${panelOpen ? "h-[64dvh] md:h-full" : "h-[68px] md:h-full"}`}>
-        <header className="relative shrink-0 border-b border-slate-200 bg-white px-4 py-3">
-          <div className="relative flex items-center gap-3">
+      <aside className={`z-10 flex w-full flex-col border-r-2 border-black bg-[#f4f4f1] md:w-[460px] md:shrink-0 dark:bg-slate-950 ${panelOpen ? "h-[64dvh] md:h-full" : "h-[68px] md:h-full"}`}>
+        <header className="relative shrink-0 overflow-hidden bg-[#050505] px-4 py-4 text-white md:px-5 md:py-5">
+          <RouteNet id="pl" dim={0.55} />
+          <div className="relative z-10 flex items-center gap-3">
             <Link href="/app" className="flex min-w-0 flex-1 items-center gap-2.5" title="Vissza az irányítópultra">
               <span className="md:hidden"><Logo /></span>
               <div className="min-w-0">
-                <h1 className="brand-word truncate text-[20px] leading-none text-slate-900">route<b className="text-violet-600">R</b> <span className="text-[11px] font-medium tracking-[0.14em] text-slate-400">BY TESOTTER</span></h1>
-                <p className="mt-1 truncate text-[11px] text-slate-500">{tripName ? `📁 ${tripName}` : "Új útvonal · útdíj · fuvarköltség"}</p>
+                <div className="mb-2 hidden items-center gap-2 md:flex"><span className="h-[2px] w-7 bg-[#00ff9d]" /><span className="font-mono text-[9.5px] font-bold uppercase tracking-[0.3em] text-[#00ff9d]">Útvonaltervező</span></div>
+                <h1 className="truncate text-[22px] font-black uppercase leading-none tracking-tighter text-white md:text-[28px]" style={{ fontFamily: "var(--font-brand)" }}><span className="rr-rise inline-block">{tripName ? "Fuvar" : "Új útvonal"}<span className="text-[#00ff9d]">.</span></span></h1>
+                <p className="mt-1.5 truncate font-mono text-[10.5px] uppercase tracking-[0.14em] text-white/50">{tripName ? `📁 ${tripName}` : "útvonal · útdíj · fuvarköltség"}</p>
               </div>
             </Link>
-            <Link href="/app" className="btn !px-2.5 !py-1.5 text-xs md:hidden">← Irányítópult</Link>
-            <button className="btn !px-2.5 !py-1.5 text-xs md:hidden" onClick={() => setPanelOpen((o) => !o)}>
+            <Link href="/app" className="btn !border-white/30 !bg-transparent !px-2.5 !py-1.5 !text-white hover:!bg-[#00ff9d] hover:!text-black md:hidden">←</Link>
+            <button className="btn !border-[#00ff9d] !bg-[#00ff9d] !px-2.5 !py-1.5 md:hidden" onClick={() => setPanelOpen((o) => !o)}>
               {panelOpen ? "Térkép ▾" : "Panel ▴"}
             </button>
           </div>
         </header>
 
-        <div className={`flex-1 space-y-3.5 overflow-y-auto px-4 pb-5 pt-4 ${panelOpen ? "" : "hidden md:block"}`}>
+        <div className={`rr-stack flex-1 space-y-4 overflow-y-auto px-4 pb-6 pt-5 ${panelOpen ? "" : "hidden md:block"}`}>
           <Card icon="route" title="Útvonal" hint="Jobb klikk: indulás / köztes pont / cél · az útvonal a térképen megfogható és húzható">
             <div className="relative space-y-2">
-              <div className="absolute bottom-4 left-[13px] top-4 w-px border-l-2 border-dashed border-slate-300 dark:border-slate-600" />
+              <div className="absolute bottom-4 left-[13px] top-4 w-px border-l-2 border-dashed border-black/25 dark:border-slate-600" />
               {waypoints.map((w, i) => {
                 const first = i === 0;
                 const last = i === waypoints.length - 1;
@@ -707,7 +710,7 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
             </div>
             {recent.length > 0 && (
               <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs">
-                <span className="text-slate-400">Legutóbbi</span>
+                <span className="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-black/40">Legutóbbi</span>
                 {recent.map((r) => (
                   <button key={r.label} className="chip" onClick={() => setWaypoints(r.waypoints)}>{r.label}</button>
                 ))}
@@ -750,7 +753,7 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
             </div>
             <div className="mt-2.5 grid grid-cols-2 gap-2.5">
               <label className="block">
-                <span className="mb-1 block text-[11px] font-medium text-slate-500 dark:text-slate-400">EURO norma</span>
+                <span className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-black/45 dark:text-slate-400">EURO norma</span>
                 <select className="field w-full" value={vehicle.euro} onChange={(e) => setVehicle({ ...vehicle, euro: e.target.value as EuroClass })}>
                   <option value="euro6">EURO VI</option><option value="euro5">EURO V / EEV</option>
                   <option value="euro4">EURO IV</option><option value="older">EURO III vagy régebbi</option>
@@ -768,12 +771,12 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
             <div className="flex flex-wrap gap-1.5 text-xs">
               {QUICK_NOGO.map((cc) => (
                 <button key={cc} onClick={() => toggleCountry(cc)}
-                  className={`rounded-full border px-2.5 py-1 transition ${noGo.countries.includes(cc) ? "border-red-500 bg-red-50 font-semibold text-red-800 dark:bg-red-950/50 dark:text-red-200" : "border-slate-200 bg-white text-slate-600 hover:border-red-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}>
+                  className={`border px-2.5 py-1 transition ${noGo.countries.includes(cc) ? "border-red-500 bg-red-50 font-semibold text-red-800 dark:bg-red-950/50 dark:text-red-200" : "border-black/20 bg-white text-black/70 hover:border-red-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}>
                   {flag(cc)} {COUNTRY_NAMES[cc]}{noGo.countries.includes(cc) ? " ✕" : ""}
                 </button>
               ))}
               {noGo.countries.filter((cc) => !QUICK_NOGO.includes(cc)).map((cc) => (
-                <button key={cc} onClick={() => toggleCountry(cc)} className="rounded-full border border-red-500 bg-red-50 px-2.5 py-1 font-semibold text-red-800 dark:bg-red-950/50 dark:text-red-200">{flag(cc)} {COUNTRY_NAMES[cc] ?? cc} ✕</button>
+                <button key={cc} onClick={() => toggleCountry(cc)} className="border border-red-500 bg-red-50 px-2.5 py-1 font-semibold text-red-800 dark:bg-red-950/50 dark:text-red-200">{flag(cc)} {COUNTRY_NAMES[cc] ?? cc} ✕</button>
               ))}
               <select className="field !py-1 text-xs" value="" onChange={(e) => e.target.value && toggleCountry(e.target.value)}>
                 <option value="">+ ország…</option>
@@ -921,7 +924,7 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
 
           <Card icon="sliders" title="Indulás és beállítások">
             <label className="block">
-              <span className="mb-1 block text-[11px] font-medium text-slate-500 dark:text-slate-400">Indulás ideje (a tilalmi idősávokhoz és menetrendhez)</span>
+              <span className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-black/45 dark:text-slate-400">Indulás ideje (a tilalmi idősávokhoz és menetrendhez)</span>
               <input type="datetime-local" className="field w-full" value={options.departure} onChange={(e) => setOptions({ ...options, departure: e.target.value })} />
             </label>
             <div className="mt-3 grid grid-cols-2 gap-2">
@@ -936,9 +939,9 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
 
           <details className="card group">
             <summary className="flex cursor-pointer list-none items-center gap-2.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-600/30"><Ico name="euro" /></span>
-              <span className="flex-1 text-[13px] font-semibold tracking-tight">Költségparaméterek</span>
-              <Ico name="chevron" className="h-4 w-4 text-slate-400 transition group-open:rotate-180" />
+              <span className="flex h-9 w-9 items-center justify-center bg-black text-[#00ff9d]"><Ico name="euro" className="h-[18px] w-[18px]" /></span>
+              <span className="flex-1 text-[14px] font-black uppercase tracking-tight text-black">Költségparaméterek</span>
+              <Ico name="chevron" className="h-5 w-5 text-black transition duration-300 group-open:rotate-180" />
             </summary>
             <div className="mt-3 grid grid-cols-2 gap-2.5">
               <Num label="Gázolaj" unit="€/l" value={costs.fuelPrice} step={0.01} onChange={(e) => setCosts({ ...costs, fuelPrice: parseFloat(e.target.value) || 0 })} />
@@ -965,12 +968,12 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
 
         </div>
 
-        <footer className={`shrink-0 border-t border-slate-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 ${panelOpen ? "" : "hidden md:block"}`}>
-          {error && <div className="mb-2 rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-200">{error}</div>}
+        <footer className={`shrink-0 border-t-2 border-black bg-white px-4 py-3.5 dark:border-slate-800 dark:bg-slate-900/90 ${panelOpen ? "" : "hidden md:block"}`}>
+          {error && <div className="mb-2 border-l-4 border-red-500 bg-red-50 p-2.5 text-xs text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-200">{error}</div>}
           {best && !loading && (
-            <div className="mb-2 flex items-center justify-between rounded-lg bg-slate-100 px-3 py-1.5 text-xs dark:bg-slate-800">
-              <span className="text-slate-500"><b className="text-slate-800 dark:text-slate-100">{Math.round(best.roadKm).toLocaleString("hu-HU")} km</b> · útdíj <b className="text-amber-700 dark:text-amber-400">{Math.round(best.tollTotalEur).toLocaleString("hu-HU")} €</b> · {Math.floor(best.drivingMin / 60)} ó {Math.round(best.drivingMin % 60)} p</span>
-              <span className="font-bold tabular-nums">{Math.round(best.totalEur).toLocaleString("hu-HU")} €</span>
+            <div className="rr-up mb-2.5 flex items-center justify-between bg-black px-3 py-2 text-xs text-white">
+              <span className="font-mono text-white/60"><b className="text-white">{Math.round(best.roadKm).toLocaleString("hu-HU")} km</b> · útdíj <b className="text-amber-300">{Math.round(best.tollTotalEur).toLocaleString("hu-HU")} €</b> · {Math.floor(best.drivingMin / 60)} ó {Math.round(best.drivingMin % 60)} p</span>
+              <span className="text-[15px] font-black tabular-nums text-[#00ff9d]" style={{ fontFamily: "var(--font-brand)" }}>{Math.round(best.totalEur).toLocaleString("hu-HU")} €</span>
             </div>
           )}
           {best && !loading && (
@@ -979,7 +982,7 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
             </button>
           )}
           {best && !loading && driverUrl && (
-            <a href={driverUrl} target="_blank" rel="noreferrer" className="btn mb-2 w-full !border-violet-200 !bg-violet-50 !text-violet-700 hover:!bg-violet-100">
+            <a href={driverUrl} target="_blank" rel="noreferrer" className="btn mb-2 w-full !bg-black !text-white hover:!bg-[#00ff9d] hover:!text-black">
               🚚 Sofőr-nézet megnyitása
             </a>
           )}
@@ -998,14 +1001,14 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
               { k: "Útdíj", v: eur(best.tollTotalEur) },
               { k: "Érkezés", v: dt(best.schedule.arrival) },
             ].map((x) => (
-              <div key={x.k} className="rounded-2xl border border-slate-200/80 bg-white/90 px-3.5 py-2 shadow-lg shadow-violet-900/10 backdrop-blur">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">{x.k}</div>
-                <div className="text-[15px] font-bold tabular-nums text-slate-900">{x.v}</div>
+              <div key={x.k} className="rr-up border-2 border-black bg-white px-3.5 py-2 shadow-[3px_3px_0_0_#000]">
+                <div className="font-mono text-[9.5px] font-bold uppercase tracking-[0.16em] text-black/45">{x.k}</div>
+                <div className="text-[16px] font-black tabular-nums text-black" style={{ fontFamily: "var(--font-brand)" }}>{x.v}</div>
               </div>
             ))}
-            <div className="rounded-2xl bg-violet-600 px-3.5 py-2 text-white shadow-lg shadow-violet-600/30">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-200">Teljes költség</div>
-              <div className="text-[15px] font-bold tabular-nums">{eur(best.totalEur)}</div>
+            <div className="rr-up border-2 border-black bg-black px-3.5 py-2 text-white shadow-[3px_3px_0_0_#00ff9d]">
+              <div className="font-mono text-[9.5px] font-bold uppercase tracking-[0.16em] text-[#00ff9d]">Teljes költség</div>
+              <div className="text-[16px] font-black tabular-nums" style={{ fontFamily: "var(--font-brand)" }}>{eur(best.totalEur)}</div>
             </div>
           </div>
         )}
@@ -1043,8 +1046,8 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
           onFlyoverClose={sOnFlyoverClose}
         />
         {best && !loading && !flyover && (
-          <button onClick={() => setFlyover(true)} className="absolute bottom-12 left-3 z-10 flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-3 text-[14px] font-extrabold text-white shadow-xl shadow-violet-900/30 transition hover:-translate-y-0.5 hover:shadow-2xl active:scale-95">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-sm">▶</span> Útvonal-lejátszás
+          <button onClick={() => setFlyover(true)} className="absolute bottom-12 left-3 z-10 flex items-center gap-2.5 border-2 border-black bg-[#00ff9d] px-4 py-3 text-[12.5px] font-extrabold uppercase tracking-[0.14em] text-black shadow-[5px_5px_0_0_#000] transition-all hover:translate-x-[5px] hover:translate-y-[5px] hover:shadow-none active:scale-95">
+            <span className="flex h-7 w-7 items-center justify-center bg-black text-sm text-[#00ff9d]">▶</span> Útvonal-lejátszás
           </button>
         )}
       </main>

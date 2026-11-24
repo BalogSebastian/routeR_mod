@@ -33,13 +33,16 @@ export function Ico({ name, className = "h-4 w-4" }: { name: keyof typeof ICONS;
 export function Card({ icon, title, hint, children, right }: { icon: keyof typeof ICONS; title: string; hint?: string; children: ReactNode; right?: ReactNode }) {
   return (
     <section className="card">
-      <header className="mb-3 flex items-center gap-2.5">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-600/30">
-          <Ico name={icon} className="h-4 w-4" />
+      <header className="mb-4 flex items-start gap-3 border-b-2 border-dashed border-black/10 pb-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-black text-[#00ff9d]">
+          <Ico name={icon} className="h-[18px] w-[18px]" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-[13px] font-semibold leading-tight tracking-tight">{title}</h2>
-          {hint && <p className="text-[11px] leading-tight text-slate-500 dark:text-slate-400">{hint}</p>}
+          <div className="flex items-baseline gap-2">
+            <span className="rr-num font-mono text-[10px] font-bold text-black/30" />
+            <h2 className="text-[14px] font-black uppercase leading-tight tracking-tight text-black">{title}</h2>
+          </div>
+          {hint && <p className="mt-0.5 text-[11.5px] leading-snug text-black/50 dark:text-slate-400">{hint}</p>}
         </div>
         {right}
       </header>
@@ -55,16 +58,16 @@ export function Toggle({ checked, onChange, label, icon }: { checked: boolean; o
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`group flex items-center gap-2 rounded-xl border px-2.5 py-2 text-left text-[12.5px] font-medium transition ${
+      className={`group flex items-center gap-2 rounded-none border-2 px-2.5 py-2 text-left text-[12.5px] font-semibold transition ${
         checked
-          ? "border-blue-500/70 bg-blue-50 text-blue-900 dark:border-blue-400/50 dark:bg-blue-950/40 dark:text-blue-100"
-          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300"
+          ? "border-black bg-black text-white"
+          : "border-black/15 bg-white text-black/65 hover:border-black dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300"
       }`}
     >
-      <Ico name={icon} className={`h-4 w-4 shrink-0 ${checked ? "text-blue-600 dark:text-blue-300" : "text-slate-400"}`} />
+      <Ico name={icon} className={`h-4 w-4 shrink-0 ${checked ? "text-[#00ff9d]" : "text-black/35"}`} />
       <span className="min-w-0 flex-1 leading-tight">{label}</span>
-      <span className={`relative h-4 w-7 shrink-0 rounded-full transition ${checked ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-600"}`}>
-        <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-all ${checked ? "left-[14px]" : "left-0.5"}`} />
+      <span className={`relative h-4 w-7 shrink-0 transition ${checked ? "bg-[#00ff9d]" : "bg-black/15 dark:bg-slate-600"}`}>
+        <span className={`absolute top-0.5 h-3 w-3 shadow transition-all ${checked ? "left-[14px] bg-black" : "left-0.5 bg-white"}`} />
       </span>
     </button>
   );
@@ -73,10 +76,10 @@ export function Toggle({ checked, onChange, label, icon }: { checked: boolean; o
 export function Num({ label, unit, value, onChange, step }: { label: string; unit?: string; value: number; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; step: number }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] font-medium text-slate-500 dark:text-slate-400">{label}</span>
+      <span className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-black/45 dark:text-slate-400">{label}</span>
       <span className="relative block">
         <input type="number" inputMode="decimal" className="field w-full pr-8 tabular-nums" value={Number.isFinite(value) ? value : ""} step={step} min={0} onChange={onChange} />
-        {unit && <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-slate-400">{unit}</span>}
+        {unit && <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[10.5px] font-bold text-black/35">{unit}</span>}
       </span>
     </label>
   );
