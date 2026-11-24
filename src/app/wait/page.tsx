@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import AuthShell from "@/components/app/AuthShell";
 import LogoutButton from "@/components/app/LogoutButton";
-import WelcomeLetter from "@/components/app/WelcomeLetter";
 import { getUser } from "@/lib/server/auth";
 
 export const metadata = { title: "Jóváhagyásra vár – routeR by tesotter" };
@@ -12,7 +11,6 @@ export default async function WaitPage() {
   if (u.status === "active") redirect("/app");
   return (
     <AuthShell title="Köszönjük a regisztrációt" subtitle={`${u.name}, a fiókod jóváhagyásra vár.`}>
-      <WelcomeLetter name={u.name} email={u.email} pending />
       <div className="space-y-4 text-sm leading-relaxed text-slate-600">
         <div className="flex items-start gap-3 border-l-4 border-[#00ff9d] bg-[#f4f4f1] p-4">
           <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-black text-xs font-bold text-[#00ff9d]">1</span>
