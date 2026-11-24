@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#3b1fa8" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#050505" };
 
 export default function DriverPage() {
   return (

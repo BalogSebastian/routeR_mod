@@ -32,10 +32,10 @@ export default function RegisterPage() {
     <AuthShell
       title="Fiók létrehozása"
       subtitle="A regisztráció után jóváhagyjuk a hozzáférésedet."
-      footer={<>Van már fiókod? <Link href="/login" className="font-semibold text-violet-600 hover:text-violet-700">Belépés</Link></>}
+      footer={<>Van már fiókod? <Link href="/login" className="font-bold text-black underline decoration-[#00ff9d] decoration-[3px] underline-offset-4 transition hover:bg-[#00ff9d] hover:no-underline">Belépés</Link></>}
     >
-      <form onSubmit={submit} className="space-y-4">
-        {error && <p className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-[13px] text-rose-700">{error}</p>}
+      <form onSubmit={submit} className="space-y-6">
+        {error && <p className="border-l-4 border-rose-500 bg-rose-50 px-3.5 py-2.5 text-[13px] font-medium text-rose-700">{error}</p>}
         <label className="block"><span className="label-xs">Név</span>
           <input className="input-lg" required autoComplete="name" value={f.name} onChange={set("name")} placeholder="Kovács János" /></label>
         <label className="block"><span className="label-xs">E-mail</span>
@@ -44,7 +44,7 @@ export default function RegisterPage() {
           <input className="input-lg" autoComplete="organization" value={f.company} onChange={set("company")} placeholder="Fuvarozó Kft." /></label>
         <label className="block"><span className="label-xs">Jelszó</span>
           <input className="input-lg" type="password" required minLength={8} autoComplete="new-password" value={f.password} onChange={set("password")} placeholder="legalább 8 karakter" /></label>
-        <button className="btn-primary w-full !py-3" disabled={busy || !f.name || !f.email || f.password.length < 8}>{busy ? "Létrehozás…" : "Regisztráció"}</button>
+        <button className="btn-primary mt-2 w-full !py-4" disabled={busy || !f.name || !f.email || f.password.length < 8}>{busy ? "Létrehozás…" : "Regisztráció"}</button>
       </form>
     </AuthShell>
   );

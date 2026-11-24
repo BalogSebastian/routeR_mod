@@ -135,7 +135,7 @@ function Results({ routes, selected, onSelect, costs, onAddStop, onRemoveStop, o
         <Fact k="Útdíj-pontosság" v={`~${Math.min(99, Math.round(r.tollConfidence * 100))}%`} sub={r.tollConfidence >= 0.95 ? "hivatalos 2026-os tarifák" : "részben becsült tarifák"} good={r.tollConfidence >= 0.95} />
       </section>
 
-      <section className="rounded-2xl bg-gradient-to-br from-[#6d4aff] via-[#4a2fb8] to-[#2a1a6e] p-4 text-white shadow-lg shadow-blue-900/20 ring-1 ring-white/10">
+      <section className="rounded-2xl bg-gradient-to-br from-[#0d3b27] via-[#08130e] to-[#050505] p-4 text-white shadow-lg shadow-black/20 ring-1 ring-white/10">
         <div className="text-xs uppercase tracking-wide text-violet-200">Teljes fuvarköltség</div>
         <div className="mt-1 flex items-baseline gap-3">
           <span className="text-3xl font-bold">{eur(r.totalEur)}</span>

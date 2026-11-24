@@ -166,7 +166,7 @@ export default function DriverView() {
               return (
                 <li key={i} className="relative rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm shadow-violet-900/[0.04]">
                   <div className="flex items-start gap-3.5">
-                    <span className={`relative z-10 flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full text-[13px] font-extrabold text-white ring-4 ring-white ${first ? "bg-emerald-500" : last ? "bg-rose-500" : "bg-violet-500"}`}>
+                    <span className={`relative z-10 flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full text-[13px] font-extrabold text-white ring-4 ring-white ${first ? "bg-emerald-500" : last ? "bg-rose-500" : "bg-violet-600"}`}>
                       {first ? "A" : last ? "B" : i}
                     </span>
                     <div className="min-w-0 flex-1 pt-px">

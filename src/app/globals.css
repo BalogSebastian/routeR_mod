@@ -1,52 +1,56 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf8ff;
-  --foreground: #231b3a;
+  --background: #f4f4f1;
+  --foreground: #0a0a0a;
+  --accent: #00ff9d;
   color-scheme: light;
 }
 
-/* a felület egyetlen, világos lilás-fehér téma: a dark: változatok nem lépnek életbe */
+/* a felület egyetlen, világos téma: a dark: változatok nem lépnek életbe */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* semleges színek: halvány lilás árnyalatú „tinta” */
-  --color-slate-50: #faf8ff;
-  --color-slate-100: #f3f0fb;
-  --color-slate-200: #e8e3f5;
-  --color-slate-300: #d5cee8;
-  --color-slate-400: #a99fc6;
-  --color-slate-500: #7b7394;
-  --color-slate-600: #5e5679;
-  --color-slate-700: #453d5e;
-  --color-slate-800: #2e2745;
-  --color-slate-900: #231b3a;
-  --color-slate-950: #150f26;
-  /* elsődleges szín: lila */
-  --color-blue-50: #f6f3ff;
-  --color-blue-100: #ede8ff;
-  --color-blue-200: #dcd3ff;
-  --color-blue-300: #c3b3ff;
-  --color-blue-400: #a58eff;
-  --color-blue-500: #8b6cff;
-  --color-blue-600: #7352f5;
-  --color-blue-700: #6240de;
-  --color-blue-800: #4f33b5;
-  --color-blue-900: #3e2a8c;
-  --color-blue-950: #271a5a;
-  --color-violet-50: #f6f3ff;
-  --color-violet-100: #ede8ff;
-  --color-violet-200: #dcd3ff;
-  --color-violet-300: #c3b3ff;
-  --color-violet-400: #a58eff;
-  --color-violet-500: #8b6cff;
-  --color-violet-600: #7352f5;
-  --color-violet-700: #6240de;
-  --color-violet-800: #4f33b5;
-  --color-violet-900: #3e2a8c;
-  --color-indigo-500: #8b6cff;
-  --color-indigo-600: #6d4aff;
-  --color-indigo-700: #5b3bdb;
+  /* semleges színek: tiszta, enyhén meleg szürkék (mint a tesotter.com) */
+  --color-slate-50: #f7f7f5;
+  --color-slate-100: #efefec;
+  --color-slate-200: #e2e2de;
+  --color-slate-300: #cfcfca;
+  --color-slate-400: #a3a39e;
+  --color-slate-500: #73736f;
+  --color-slate-600: #575754;
+  --color-slate-700: #3d3d3b;
+  --color-slate-800: #262625;
+  --color-slate-900: #121212;
+  --color-slate-950: #050505;
+  /* elsődleges szín: routeR neonzöld (#00FF9D); a sötétebb árnyalatok olvashatók fehér háttéren */
+  --color-blue-50: #ecfff6;
+  --color-blue-100: #d2ffeb;
+  --color-blue-200: #a6ffd7;
+  --color-blue-300: #5cffbc;
+  --color-blue-400: #00ff9d;
+  --color-blue-500: #00d987;
+  --color-blue-600: #009a5e;
+  --color-blue-700: #007a4a;
+  --color-blue-800: #06613d;
+  --color-blue-900: #084d32;
+  --color-blue-950: #022b1b;
+  --color-violet-50: #ecfff6;
+  --color-violet-100: #d2ffeb;
+  --color-violet-200: #a6ffd7;
+  --color-violet-300: #5cffbc;
+  --color-violet-400: #00ff9d;
+  --color-violet-500: #00d987;
+  --color-violet-600: #009a5e;
+  --color-violet-700: #007a4a;
+  --color-violet-800: #06613d;
+  --color-violet-900: #084d32;
+  --color-violet-950: #022b1b;
+  --color-indigo-50: #ecfff6;
+  --color-indigo-500: #00d987;
+  --color-indigo-600: #00b872;
+  --color-indigo-700: #007a4a;
+  --color-accent: #00ff9d;
 }
 
 @theme inline {
@@ -96,11 +100,11 @@ body {
 }
 @utility cta {
   display: flex;
-  @apply flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/30 transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none;
+  @apply flex w-full items-center justify-center gap-2 rounded-xl bg-[#00ff9d] py-3 text-sm font-extrabold uppercase tracking-[0.12em] text-black shadow-[4px_4px_0_0_#000] transition hover:bg-black hover:text-[#00ff9d] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none;
 }
 
 .brand-bar {
-  background: radial-gradient(120% 160% at 0% 0%, #6d4aff 0%, #4a2fb8 50%, #2a1a6e 100%);
+  background: radial-gradient(120% 160% at 0% 0%, #0d3b27 0%, #08130e 50%, #050505 100%);
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
 }
 .brand-bar::after {
@@ -108,7 +112,7 @@ body {
   position: absolute;
   inset: auto -20% -60% 30%;
   height: 140px;
-  background: radial-gradient(closest-side, rgb(196 181 253 / 0.25), transparent);
+  background: radial-gradient(closest-side, rgb(0 255 157 / 0.18), transparent);
   pointer-events: none;
 }
 .brand-word {
@@ -134,7 +138,7 @@ body {
 
 details > summary::-webkit-details-marker { display: none; }
 
-.maplibregl-popup-content { color: #231b3a; border-radius: 12px; }
+.maplibregl-popup-content { color: #0a0a0a; border-radius: 12px; }
 
 @media print {
   aside { width: 100% !important; height: auto !important; }
@@ -143,19 +147,16 @@ details > summary::-webkit-details-marker { display: none; }
 
 /* ---------- routeR: belépő és irányítópult ---------- */
 @utility btn-primary {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-violet-600/25 transition hover:bg-violet-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50;
+  @apply inline-flex items-center justify-center gap-2 rounded-none bg-black px-5 py-3 text-[13px] font-extrabold uppercase tracking-[0.16em] text-white shadow-[5px_5px_0_0_#00ff9d] transition-all duration-200 hover:translate-x-[5px] hover:translate-y-[5px] hover:bg-[#00ff9d] hover:text-black hover:shadow-none active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:bg-black disabled:hover:text-white disabled:hover:shadow-[5px_5px_0_0_#00ff9d];
 }
 @utility input-lg {
-  @apply w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10;
+  @apply w-full rounded-none border-0 border-b-2 border-black/15 bg-transparent px-0 py-3 text-[17px] font-medium text-black outline-none transition-colors placeholder:font-normal placeholder:text-black/25 focus:border-black;
 }
 @utility label-xs {
-  @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500;
+  @apply mb-1 block font-mono text-[10.5px] font-bold uppercase tracking-[0.22em] text-black/45;
 }
 .auth-bg {
-  background:
-    radial-gradient(60% 50% at 15% 0%, rgb(196 181 253 / 0.45), transparent 70%),
-    radial-gradient(50% 45% at 100% 100%, rgb(221 214 254 / 0.55), transparent 70%),
-    #faf8ff;
+  background: #ffffff;
 }
 
 /* ---------- sofőr-oldal ---------- */
@@ -166,9 +167,9 @@ details > summary::-webkit-details-marker { display: none; }
 }
 .driver-hero {
   background:
-    radial-gradient(120% 90% at 100% 0%, rgba(167, 139, 250, 0.55) 0%, transparent 55%),
-    radial-gradient(90% 70% at 0% 100%, rgba(99, 64, 222, 0.6) 0%, transparent 60%),
-    linear-gradient(160deg, #4a2bd6 0%, #34199a 55%, #1f0f5c 100%);
+    radial-gradient(120% 90% at 100% 0%, rgba(0, 255, 157, 0.28) 0%, transparent 55%),
+    radial-gradient(90% 70% at 0% 100%, rgba(0, 160, 98, 0.35) 0%, transparent 60%),
+    linear-gradient(160deg, #0d1f17 0%, #070d0a 55%, #030504 100%);
 }
 .driver-hero::after {
   content: "";
@@ -180,17 +181,52 @@ details > summary::-webkit-details-marker { display: none; }
   pointer-events: none;
 }
 .driver-cta {
-  background: linear-gradient(135deg, #7c5cff 0%, #5b3bdb 100%);
-  box-shadow: 0 14px 30px -10px rgba(91, 59, 219, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  background: linear-gradient(135deg, #00c97b 0%, #008f57 100%);
+  box-shadow: 0 14px 30px -10px rgba(0, 201, 123, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 @keyframes driver-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .driver-in { animation: driver-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 
 .app-side {
   background:
-    radial-gradient(120% 60% at 0% 0%, rgba(124, 92, 245, 0.45) 0%, transparent 60%),
-    linear-gradient(180deg, #24135c 0%, #170c40 100%);
+    radial-gradient(120% 50% at 0% 0%, rgba(0, 255, 157, 0.16) 0%, transparent 60%),
+    linear-gradient(180deg, #0b0b0b 0%, #050505 100%);
+  border-right: 1px solid rgb(255 255 255 / 0.06);
 }
 
 @keyframes toast { 0% { opacity: 0; transform: translate(-50%, -14px) scale(.9); } 12%, 82% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -8px) scale(.96); } }
 @keyframes pop { from { opacity: 0; transform: translate(-50%, 12px) scale(.94); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+
+/* ---------- routeR: belépő animációk (tiszta CSS) ---------- */
+@keyframes rr-flow { to { stroke-dashoffset: -1; } }
+.rr-flow { stroke-dasharray: 0.07 0.93; animation: rr-flow 7s linear infinite; }
+@keyframes rr-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.rr-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: rr-draw 2.4s cubic-bezier(0.65, 0, 0.35, 1) forwards; }
+@keyframes rr-rise { from { transform: translateY(110%); } to { transform: none; } }
+.rr-rise { display: block; transform: translateY(110%); animation: rr-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes rr-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.rr-up { opacity: 0; animation: rr-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes rr-ping { from { transform: scale(0.4); opacity: 0.9; } to { transform: scale(2.2); opacity: 0; } }
+.rr-ping { transform-box: fill-box; transform-origin: center; animation: rr-ping 2.2s ease-out infinite; }
+@keyframes rr-marquee { to { transform: translateX(-50%); } }
+.rr-marquee { animation: rr-marquee 30s linear infinite; }
+@keyframes rr-truck { 0% { offset-distance: 0%; } 100% { offset-distance: 100%; } }
+.rr-truck { offset-rotate: auto; animation: rr-truck 9s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+@keyframes rr-blink { 50% { opacity: 0; } }
+.rr-blink { animation: rr-blink 1s steps(1) infinite; }
+
+/* köszönőlevél */
+@keyframes rr-letter-in { from { opacity: 0; transform: translateY(40px) rotate(-6deg) scale(0.92); } to { opacity: 1; transform: rotate(-1.2deg); } }
+.rr-letter { animation: rr-letter-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes rr-write { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.rr-write { clip-path: inset(0 100% 0 0); animation: rr-write 0.9s cubic-bezier(0.55, 0.1, 0.35, 1) forwards; }
+@keyframes rr-stamp { 0% { opacity: 0; transform: scale(2.4) rotate(-30deg); } 70% { opacity: 1; transform: scale(0.92) rotate(-14deg); } 100% { opacity: 1; transform: scale(1) rotate(-14deg); } }
+.rr-stamp { opacity: 0; animation: rr-stamp 0.55s cubic-bezier(0.2, 0.8, 0.3, 1.2) forwards; }
+@keyframes rr-backdrop { from { opacity: 0; } to { opacity: 1; } }
+.rr-backdrop { animation: rr-backdrop 0.5s ease both; }
+.font-script { font-family: var(--font-script), "Comic Sans MS", cursive; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rr-flow, .rr-ping, .rr-marquee, .rr-truck, .rr-blink { animation: none; }
+  .rr-draw, .rr-rise, .rr-up, .rr-write, .rr-stamp, .rr-letter, .rr-backdrop { animation-duration: 0.01s; animation-delay: 0s !important; }
+}

@@ -242,7 +242,7 @@ export default function MapView({
       map.addLayer({ id: "main-case", type: "line", source: "main", layout: { "line-cap": "round", "line-join": "round" },
         paint: { "line-color": "#ffffff", "line-width": 9 } });
       map.addLayer({ id: "main-line", type: "line", source: "main", layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": "#2563eb", "line-width": 6 } });
+        paint: { "line-color": "#00c97b", "line-width": 6 } });
       map.addLayer({ id: "toll-line", type: "line", source: "toll", layout: { "line-cap": "butt", "line-join": "round" },
         paint: { "line-color": "#f59e0b", "line-width": 3, "line-dasharray": [1.2, 1] } });
       map.addLayer({ id: "ferry-case", type: "line", source: "ferry", layout: { "line-cap": "round" },
@@ -257,19 +257,19 @@ export default function MapView({
       map.addLayer({ id: "draw-line", type: "line", source: "draw", paint: { "line-color": "#dc2626", "line-width": 2.5 } });
       map.addLayer({ id: "draw-pt", type: "circle", source: "draw", filter: ["==", "$type", "Point"], paint: { "circle-radius": 5, "circle-color": "#fff", "circle-stroke-color": "#dc2626", "circle-stroke-width": 2.5 } });
       map.addLayer({ id: "drag-line", type: "line", source: "drag", layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": "#1d4ed8", "line-width": 4, "line-dasharray": [1.5, 1.2], "line-opacity": 0.9 } });
+        paint: { "line-color": "#008f57", "line-width": 4, "line-dasharray": [1.5, 1.2], "line-opacity": 0.9 } });
       map.addLayer({ id: "handle-dot", type: "circle", source: "handle",
-        paint: { "circle-radius": 7, "circle-color": "#ffffff", "circle-stroke-color": "#1d4ed8", "circle-stroke-width": 3 } });
+        paint: { "circle-radius": 7, "circle-color": "#ffffff", "circle-stroke-color": "#008f57", "circle-stroke-width": 3 } });
       map.addLayer({ id: "restr-line", type: "line", source: "restr", layout: { "line-cap": "round" },
         paint: { "line-color": "#dc2626", "line-width": ["interpolate", ["linear"], ["zoom"], 10, 3, 16, 8], "line-opacity": 0.9 } });
 
       map.addLayer({ id: "park-circle", type: "circle", source: "park",
-        paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 4, 14, 9], "circle-color": "#1d4ed8", "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 } });
+        paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 4, 14, 9], "circle-color": "#008f57", "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 } });
       map.addLayer({ id: "park-label", type: "symbol", source: "park", minzoom: 9,
         layout: { "text-field": "P", "text-size": 11, "text-allow-overlap": true }, paint: { "text-color": "#ffffff" } });
       // a megálló (☕ / 🌙) fölé víve: a 40 km-es körzet összes kamionparkolója és pihenőhelye
-      map.addLayer({ id: "ring-fill", type: "fill", source: "ring", paint: { "fill-color": "#7c5cf5", "fill-opacity": 0.06 } });
-      map.addLayer({ id: "ring-line", type: "line", source: "ring", paint: { "line-color": "#7c5cf5", "line-width": 2, "line-dasharray": [2, 2], "line-opacity": 0.8 } });
+      map.addLayer({ id: "ring-fill", type: "fill", source: "ring", paint: { "fill-color": "#00c97b", "fill-opacity": 0.06 } });
+      map.addLayer({ id: "ring-line", type: "line", source: "ring", paint: { "line-color": "#00a866", "line-width": 2, "line-dasharray": [2, 2], "line-opacity": 0.8 } });
       map.addLayer({ id: "near-circle", type: "circle", source: "near",
         paint: {
           "circle-radius": ["interpolate", ["linear"], ["zoom"], 5, 5, 10, 8, 14, 11],
@@ -549,7 +549,7 @@ export default function MapView({
       const via = !first && !last && w.via;
       d.textContent = first ? "A" : last ? "B" : via ? "" : String(i);
       d.style.cssText = via
-        ? "width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid #1d4ed8;box-shadow:0 1px 4px rgba(0,0,0,.45)"
+        ? "width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid #008f57;box-shadow:0 1px 4px rgba(0,0,0,.45)"
         : `width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 13px system-ui;color:#fff;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45);background:${first ? "#16a34a" : last ? "#dc2626" : "#475569"}`;
       d.style.cursor = "grab";
       d.title = first || last

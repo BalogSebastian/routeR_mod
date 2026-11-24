@@ -75,15 +75,15 @@ export default function Flyover({ map, data, onClose }: { map: MLMap; data: FlyD
     map.addSource("fly-trail", { type: "geojson", data: line([]) });
     const lay = { "line-cap": "round" as const, "line-join": "round" as const };
     map.addLayer({ id: "fly-base-case", type: "line", source: "fly-base", layout: lay, paint: { "line-color": "#ffffff", "line-width": 9, "line-opacity": 0.85 } });
-    map.addLayer({ id: "fly-base-line", type: "line", source: "fly-base", layout: lay, paint: { "line-color": "#a78bfa", "line-width": 5, "line-opacity": 0.55 } });
-    map.addLayer({ id: "fly-trail-glow", type: "line", source: "fly-trail", layout: lay, paint: { "line-color": "#7c3aed", "line-width": 18, "line-opacity": 0.35, "line-blur": 7 } });
+    map.addLayer({ id: "fly-base-line", type: "line", source: "fly-base", layout: lay, paint: { "line-color": "#5cffbc", "line-width": 5, "line-opacity": 0.55 } });
+    map.addLayer({ id: "fly-trail-glow", type: "line", source: "fly-trail", layout: lay, paint: { "line-color": "#00ff9d", "line-width": 18, "line-opacity": 0.35, "line-blur": 7 } });
     map.addLayer({ id: "fly-trail-case", type: "line", source: "fly-trail", layout: lay, paint: { "line-color": "#ffffff", "line-width": 10 } });
-    map.addLayer({ id: "fly-trail-line", type: "line", source: "fly-trail", layout: lay, paint: { "line-color": "#6d28d9", "line-width": 6.5 } });
+    map.addLayer({ id: "fly-trail-line", type: "line", source: "fly-trail", layout: lay, paint: { "line-color": "#00c97b", "line-width": 6.5 } });
 
     const el = document.createElement("div");
-    el.style.cssText = "width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;border:3px solid #6d28d9;box-shadow:0 8px 22px rgba(0,0,0,.5)";
+    el.style.cssText = "width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;border:3px solid #00c97b;box-shadow:0 8px 22px rgba(0,0,0,.5)";
     el.textContent = "🚛";
-    el.animate([{ boxShadow: "0 0 0 0 rgba(124,58,237,.55), 0 8px 22px rgba(0,0,0,.5)" }, { boxShadow: "0 0 0 22px rgba(124,58,237,0), 0 8px 22px rgba(0,0,0,.5)" }], { duration: 1600, iterations: Infinity });
+    el.animate([{ boxShadow: "0 0 0 0 rgba(0,255,157,.55), 0 8px 22px rgba(0,0,0,.5)" }, { boxShadow: "0 0 0 22px rgba(0,255,157,0), 0 8px 22px rgba(0,0,0,.5)" }], { duration: 1600, iterations: Infinity });
     const marker = new maplibregl.Marker({ element: el, pitchAlignment: "viewport", rotationAlignment: "viewport" }).setLngLat(geo[0]).addTo(map);
 
     const bb = geo.reduce((b, p) => b.extend(p as [number, number]), new maplibregl.LngLatBounds(geo[0] as [number, number], geo[0] as [number, number]));
@@ -202,12 +202,12 @@ export default function Flyover({ map, data, onClose }: { map: MLMap; data: FlyD
   return (
     <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
       {/* éjszakai hangulat */}
-      <div className="absolute inset-0 transition-opacity duration-700" style={{ background: "#0a1040", mixBlendMode: "multiply", opacity: night }} />
+      <div className="absolute inset-0 transition-opacity duration-700" style={{ background: "#04140d", mixBlendMode: "multiply", opacity: night }} />
       <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/35 to-transparent" />
 
       {/* felső sor: út-tábla + sebesség */}
       <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-3 sm:left-5 sm:right-5 sm:top-5">
-        <div className="flex items-center gap-3 rounded-2xl bg-[#1b1040]/85 px-3.5 py-2.5 text-white shadow-xl backdrop-blur-md">
+        <div className="flex items-center gap-3 rounded-2xl bg-[#0a0a0a]/85 px-3.5 py-2.5 text-white shadow-xl backdrop-blur-md">
           {hud?.road ? (
             <span className="flex h-9 min-w-[44px] items-center justify-center rounded-lg px-2 text-[15px] font-extrabold" style={{ background: SHIELD[hud.cls] ?? "#475569", color: hud.cls === "primary" ? "#111" : "#fff", border: "2px solid rgba(255,255,255,.85)" }}>{hud.road}</span>
           ) : <span className="text-2xl">🛣️</span>}
@@ -216,10 +216,10 @@ export default function Flyover({ map, data, onClose }: { map: MLMap; data: FlyD
             <div className="text-[13px] font-bold">{hud?.cls === "motorway" ? "Autópálya" : hud?.cls === "trunk" ? "Autóút" : hud?.cls === "primary" ? "Főút" : hud?.cls === "ferry" ? "Komp / vasút" : "Mellékút"}</div>
           </div>
         </div>
-        <div className="relative flex h-[78px] w-[78px] items-center justify-center rounded-full bg-[#1b1040]/85 shadow-xl backdrop-blur-md">
+        <div className="relative flex h-[78px] w-[78px] items-center justify-center rounded-full bg-[#0a0a0a]/85 shadow-xl backdrop-blur-md">
           <svg viewBox="0 0 80 80" className="absolute inset-0 -rotate-90">
             <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,.14)" strokeWidth="6" />
-            <circle cx="40" cy="40" r="34" fill="none" stroke="#a78bfa" strokeWidth="6" strokeLinecap="round" strokeDasharray={`${Math.min(1, (hud?.v ?? 0) / 100) * 213.6} 213.6`} className="transition-[stroke-dasharray] duration-500" />
+            <circle cx="40" cy="40" r="34" fill="none" stroke="#00ff9d" strokeWidth="6" strokeLinecap="round" strokeDasharray={`${Math.min(1, (hud?.v ?? 0) / 100) * 213.6} 213.6`} className="transition-[stroke-dasharray] duration-500" />
           </svg>
           <div className="text-center text-white"><div className="text-[22px] font-extrabold leading-none tabular-nums">{Math.round(hud?.v ?? 0)}</div><div className="text-[9px] font-bold uppercase tracking-wider text-violet-300">km/h</div></div>
         </div>
@@ -265,7 +265,7 @@ export default function Flyover({ map, data, onClose }: { map: MLMap; data: FlyD
 
       {/* alsó műszerfal */}
       <div className="absolute inset-x-0 bottom-0 flex justify-center p-2.5 sm:p-4">
-        <div className="pointer-events-auto w-full max-w-[720px] overflow-hidden rounded-[26px] border border-white/15 bg-[#1b1040]/92 p-4 text-white shadow-2xl shadow-violet-950/60 backdrop-blur-xl sm:p-5">
+        <div className="pointer-events-auto w-full max-w-[720px] overflow-hidden rounded-[26px] border border-white/15 bg-[#0a0a0a]/92 p-4 text-white shadow-2xl shadow-violet-950/60 backdrop-blur-xl sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-violet-300">
@@ -310,7 +310,7 @@ export default function Flyover({ map, data, onClose }: { map: MLMap; data: FlyD
           <div className="mt-3 flex items-center gap-2">
             <button
               onClick={() => { if (ended) { replay(); return; } setPlaying((p) => !p); }}
-              className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-500 text-lg font-bold shadow-lg shadow-violet-900/40 transition hover:bg-violet-400 active:scale-95"
+              className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-400 text-lg font-bold text-black shadow-lg shadow-violet-900/40 transition hover:bg-white active:scale-95"
               aria-label={playing ? "Szünet" : "Lejátszás"}
             >{ended ? "↺" : playing ? "❚❚" : "▶"}</button>
             <div className="flex gap-1">

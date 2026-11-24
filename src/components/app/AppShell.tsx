@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo, Wordmark } from "@/components/Brand";
 import LogoutButton from "./LogoutButton";
+import WelcomeLetter from "./WelcomeLetter";
 
 const NAV = [
   { href: "/app", label: "Irányítópult", icon: "M3 12l9-8 9 8M5 10v10h5v-6h4v6h5V10" },
@@ -23,32 +24,33 @@ export default function AppShell({ user, children }: { user: { name: string; ema
   const active = (h: string) => (h === "/app" ? path === "/app" : path.startsWith(h));
   const initials = user.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   return (
-    <div className="min-h-dvh bg-[#f6f4fd] md:flex">
+    <div className="min-h-dvh bg-[#f4f4f1] md:flex">
+      <WelcomeLetter name={user.name} email={user.email} />
       <aside className="app-side hidden w-[264px] shrink-0 flex-col px-4 py-6 text-white md:sticky md:top-0 md:flex md:h-dvh">
         <Link href="/app" className="flex items-center gap-2.5 px-2">
           <Logo className="h-9 w-9" />
           <span className="brand-word inline-flex items-baseline gap-2">
-            <span className="text-[22px] leading-none text-white">route<b className="text-violet-300">R</b></span>
-            <span className="whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.18em] text-violet-300/70">by tesotter</span>
+            <span className="text-[22px] leading-none text-white">route<b className="text-[#00ff9d]">R</b></span>
+            <span className="whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.18em] text-white/40">by tesotter</span>
           </span>
         </Link>
         <nav className="mt-10 space-y-1">
           {items.map((n) => (
-            <Link key={n.href} href={n.href} className={`group flex items-center gap-3 rounded-2xl px-3.5 py-3 text-[14px] font-semibold transition ${active(n.href) ? "bg-white/[0.13] text-white shadow-inner shadow-white/10 ring-1 ring-white/15" : "text-violet-200/80 hover:bg-white/[0.07] hover:text-white"}`}>
+            <Link key={n.href} href={n.href} className={`group flex items-center gap-3 rounded-2xl px-3.5 py-3 text-[14px] font-semibold transition ${active(n.href) ? "bg-[#00ff9d] text-black shadow-[0_0_24px_rgba(0,255,157,0.25)]" : "text-white/60 hover:bg-white/[0.07] hover:text-white"}`}>
               <Icon d={n.icon} />{n.label}
-              {active(n.href) && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-violet-300" />}
+              {active(n.href) && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-black" />}
             </Link>
           ))}
         </nav>
         <div className="mt-auto rounded-3xl border border-white/10 bg-white/[0.07] p-3.5 backdrop-blur">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400 to-indigo-500 text-sm font-extrabold">{initials}</span>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#00ff9d] text-sm font-extrabold text-black">{initials}</span>
             <div className="min-w-0">
               <div className="truncate text-[14px] font-bold">{user.name}</div>
-              <div className="truncate text-[11.5px] text-violet-200/70">{user.email}</div>
+              <div className="truncate text-[11.5px] text-white/45">{user.email}</div>
             </div>
           </div>
-          <LogoutButton className="mt-3 w-full rounded-xl bg-white/10 py-2 text-xs font-bold text-violet-100 transition hover:bg-white/20" />
+          <LogoutButton className="mt-3 w-full rounded-xl bg-white/10 py-2 text-xs font-bold text-white/80 transition hover:bg-[#00ff9d] hover:text-black" />
         </div>
       </aside>
 
@@ -59,9 +61,9 @@ export default function AppShell({ user, children }: { user: { name: string; ema
           <LogoutButton className="text-xs font-semibold text-violet-600" />
         </header>
         <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 md:px-10 md:py-10">{children}</main>
-        <nav className="fixed inset-x-3 bottom-3 z-20 flex rounded-3xl border border-white/10 bg-[#1d1245]/95 p-1.5 shadow-2xl shadow-violet-950/40 backdrop-blur md:hidden">
+        <nav className="fixed inset-x-3 bottom-3 z-20 flex rounded-3xl border border-white/10 bg-[#0a0a0a]/95 p-1.5 shadow-2xl shadow-black/40 backdrop-blur md:hidden">
           {items.map((n) => (
-            <Link key={n.href} href={n.href} className={`flex flex-1 flex-col items-center gap-1 rounded-2xl py-2 text-[10px] font-semibold transition ${active(n.href) ? "bg-white/15 text-white" : "text-violet-300/80"}`}>
+            <Link key={n.href} href={n.href} className={`flex flex-1 flex-col items-center gap-1 rounded-2xl py-2 text-[10px] font-semibold transition ${active(n.href) ? "bg-[#00ff9d] text-black" : "text-white/55"}`}>
               <Icon d={n.icon} />{n.label}
             </Link>
           ))}
