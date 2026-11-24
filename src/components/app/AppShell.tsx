@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Logo, Wordmark } from "@/components/Brand";
 import LogoutButton from "./LogoutButton";
 import RouteNet from "./RouteNet";
-import WelcomeLetter from "./WelcomeLetter";
+import WelcomeLetter, { openWelcomeLetter } from "./WelcomeLetter";
 
 const NAV = [
   { href: "/app", label: "Irányítópult", icon: "M3 12l9-8 9 8M5 10v10h5v-6h4v6h5V10" },
@@ -45,7 +45,32 @@ export default function AppShell({ user, children }: { user: { name: string; ema
             </Link>
           ))}
         </nav>
-        <div className="relative z-10 mt-auto border border-white/15 bg-black/60 p-3.5 backdrop-blur">
+
+        {/* a köszönőlevél: bárki bármikor újra elolvashatja */}
+        <button onClick={openWelcomeLetter} aria-label="Köszönőlevél megnyitása" className="group relative z-10 mx-auto mt-auto mb-6 block w-[208px] text-left [@media(max-height:740px)]:hidden">
+          <span className="block font-mono text-[10px] font-bold uppercase tracking-[0.3em] text-white/30 transition group-hover:text-[#00ff9d]">Levél neked ✉</span>
+          <span className="rr-card-in mt-3 block" style={{ animationDelay: "0.6s" }}>
+            <span className="relative block -rotate-3 transition duration-500 ease-[cubic-bezier(0.2,0.8,0.3,1.4)] group-hover:-translate-y-2 group-hover:rotate-1 group-hover:scale-105">
+              <span aria-hidden className="absolute -top-2 left-5 z-10 h-4 w-16 -rotate-6 bg-[#00ff9d]/75" />
+              <span aria-hidden className="absolute -top-1.5 right-6 z-10 h-4 w-12 rotate-[9deg] bg-white/50" />
+              <span
+                className="font-script relative block overflow-hidden rounded-[3px] px-4 pb-3 pt-4 text-[#1a2a6c] shadow-[0_18px_40px_rgba(0,0,0,0.55)] transition group-hover:shadow-[0_22px_50px_rgba(0,255,157,0.25)]"
+                style={{ background: "#fffdf5", backgroundImage: "linear-gradient(90deg, transparent 18px, rgba(255,90,90,0.28) 18px, rgba(255,90,90,0.28) 19px, transparent 19px), repeating-linear-gradient(180deg, transparent 0 19px, rgba(0,120,200,0.12) 19px 20px)" }}
+              >
+                <span className="block pl-3 text-[19px] font-bold leading-5 text-black">Kedves {user.name.split(" ")[0]}!</span>
+                <span className="mt-1 block pl-3 text-[15px] leading-5">Köszönjük, hogy a routeR-t választottad…</span>
+                <span className="mt-1.5 block pl-3 text-[15px] font-bold leading-5 text-black">Erick, Sebastian és Gergő</span>
+                <svg aria-hidden viewBox="0 0 100 100" className="absolute -bottom-1 -right-1 h-12 w-12 -rotate-12 opacity-80">
+                  <circle cx="50" cy="50" r="44" fill="none" stroke="#00a866" strokeWidth="4" />
+                  <text x="50" y="56" textAnchor="middle" fontSize="20" fill="#00a866">♥</text>
+                </svg>
+              </span>
+            </span>
+          </span>
+          <span className="mt-3 block text-center font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-white/40 transition group-hover:text-[#00ff9d]">Kattints és olvasd el →</span>
+        </button>
+
+        <div className="relative z-10 border border-white/15 bg-black/60 p-3.5 backdrop-blur">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#00ff9d] font-mono text-sm font-black text-black">{initials}</span>
             <div className="min-w-0">
@@ -61,7 +86,10 @@ export default function AppShell({ user, children }: { user: { name: string; ema
         {/* mobil felső sáv */}
         <header className="sticky top-0 z-20 flex items-center justify-between border-b-2 border-black bg-white/95 px-4 py-3 backdrop-blur md:hidden">
           <Link href="/app" className="flex items-center gap-2"><Logo className="h-8 w-8" /><Wordmark /></Link>
-          <LogoutButton className="border-b-2 border-[#00ff9d] font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-black" />
+          <span className="flex items-center gap-4">
+            <button onClick={openWelcomeLetter} aria-label="Köszönőlevél megnyitása" className="flex h-8 w-8 items-center justify-center bg-[#00ff9d] text-[15px] shadow-[3px_3px_0_0_#000]">✉</button>
+            <LogoutButton className="border-b-2 border-[#00ff9d] font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-black" />
+          </span>
         </header>
         <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 md:px-10 md:py-10">{children}</main>
         <nav className="fixed inset-x-3 bottom-3 z-20 flex border-2 border-black bg-[#0a0a0a]/95 p-1.5 shadow-[5px_5px_0_0_#00ff9d] backdrop-blur md:hidden">

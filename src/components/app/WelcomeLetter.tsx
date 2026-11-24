@@ -7,6 +7,9 @@ import { useEffect, useState } from "react";
  * Felhasználónként (e-mail-cím szerint) egyszer jelenik meg, a böngészőben megjegyezve.
  * Tisztán megjelenítési elem: semmilyen adatot nem küld és nem módosít.
  */
+export const LETTER_EVENT = "routeR:letter";
+export const openWelcomeLetter = () => window.dispatchEvent(new Event(LETTER_EVENT));
+
 export default function WelcomeLetter({ name, email, pending = false }: { name: string; email: string; pending?: boolean }) {
   const key = `routeR.welcome.v1.${email.toLowerCase()}`;
   const [open, setOpen] = useState(false);
@@ -22,6 +25,13 @@ export default function WelcomeLetter({ name, email, pending = false }: { name: 
     const t = setTimeout(() => setOpen(true), 700);
     return () => clearTimeout(t);
   }, [key]);
+
+  // bármikor újra megnyitható (pl. az oldalsáv levél-kártyájáról)
+  useEffect(() => {
+    const show = () => setOpen(true);
+    window.addEventListener(LETTER_EVENT, show);
+    return () => window.removeEventListener(LETTER_EVENT, show);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
