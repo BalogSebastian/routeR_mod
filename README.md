@@ -40,3 +40,31 @@ Lásd `.env.example`. Kötelező: `ROUTER_MONGODB_URI`, `ROUTER_SESSION_SECRET` 
 
 ## Biztonság
 Az összes `/api/*` végpont (routing, geokódolás, térkép-csempék stb.) aktív, jóváhagyott munkamenetet kér. A `/app` és `/planner` oldalak süti nélkül a belépőre irányítanak (`src/proxy.ts`), az adatbázisos ellenőrzés az oldalakban és az API-kban történik.
+
+## Levélküldés: Microsoft Graph (tesotter.com)
+
+A routeR a `MAIL_FROM` postafiók nevében küld a Microsoft Graph `sendMail` hívásával, jelszó nélkül.
+Ha a Graph nincs beállítva, tartalékként SMTP-n megy (`EMAIL_USER` / `EMAIL_PASS`, opcionálisan `EMAIL_HOST` / `EMAIL_PORT`).
+
+**1. Entra-alkalmazás** (entra.microsoft.com → Alkalmazásregisztrációk → Új regisztráció)
+- Név: `routeR mail`, egyetlen tenant, átirányítási URI nem kell.
+- Áttekintés: másold ki az **Alkalmazás (ügyfél) azonosítóját** → `MS_CLIENT_ID` és a **Címtár (bérlő) azonosítóját** → `MS_TENANT_ID`.
+- Tanúsítványok és titkos kódok → Új titkos ügyfélkód (24 hónap) → az **Érték** oszlop → `MS_CLIENT_SECRET` (nem a „Titkos kód azonosítója”!).
+- API-engedélyekhez **ne** adj `Mail.Send`-et: az az egész cég nevében engedne küldeni. A jogot a 2. lépés adja, egy postafiókra szűkítve.
+
+**2. Jog csak egy postafiókra** (Exchange Online PowerShell, Exchange-rendszergazdaként)
+```powershell
+Install-Module ExchangeOnlineManagement   # egyszer
+Connect-ExchangeOnline
+# ObjectId: Entra → Vállalati alkalmazások → routeR mail → Objektumazonosító (NEM az app-regisztrációé)
+New-ServicePrincipal -AppId <MS_CLIENT_ID> -ObjectId <vállalati alkalmazás objektumazonosító> -DisplayName "routeR mail"
+New-ManagementScope -Name "routeR kuldo" -RecipientRestrictionFilter "PrimarySmtpAddress -eq 'sebastian.balog@tesotter.com'"
+New-ManagementRoleAssignment -App <MS_CLIENT_ID> -Role "Application Mail.Send" -CustomResourceScope "routeR kuldo"
+Test-ServicePrincipalAuthorization -Identity <MS_CLIENT_ID> -Resource sebastian.balog@tesotter.com   # InScope: True
+```
+A jogosultság érvénybe lépése 30 perc–2 óra lehet; addig a küldés 403-at ad.
+
+**3. Ellenőrzés és élesítés**
+- `.env.local`: `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `MAIL_FROM` → `npm run mail:check -- cimzett@pelda.hu`
+- Vercel: ugyanez a 4 változó Production környezetbe (`vercel env add …`), majd új deploy. Az admin felület „Teszt e-mail küldése” gombja kiírja a csatornát és a hibát.
+- A titok lejárta előtt újat kell készíteni (az Entra figyelmeztet); lejárt titoknál a hibaüzenet ezt jelzi.

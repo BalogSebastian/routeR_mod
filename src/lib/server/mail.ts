@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { graphConfig, sendViaGraph } from "./graph-mail";
 import { getDb } from "./models";
 
 /** az e-mailekben lévő linkek alapcíme: mindig a publikus cím, soha nem localhost */
@@ -41,10 +42,31 @@ async function log(to: string, subject: string, r: SendResult) {
   } catch { /* a naplózás hibája ne akassza meg a küldést */ }
 }
 
+/** melyik csatornán megy ki a levél (admin felületen / tesztben kiírható) */
+export function mailChannel(): string {
+  const g = graphConfig();
+  if (g) return `Microsoft Graph (${g.from})`;
+  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) return `SMTP (${process.env.EMAIL_HOST?.trim() || "gmail"}, ${process.env.EMAIL_USER})`;
+  return "nincs beállítva";
+}
+
 async function send(to: string, subject: string, html: string): Promise<SendResult> {
-  const t = transport();
   let res: SendResult;
-  if (!t) res = { ok: false, error: "Az EMAIL_USER / EMAIL_PASS nincs beállítva a szerveren." };
+  const g = graphConfig();
+  if (g) {
+    // Microsoft 365 / Graph: elsődleges csatorna, ha be van állítva
+    try {
+      const r = await sendViaGraph(g, { to, subject, html });
+      res = { ok: true, accepted: [to], response: `Graph ${r.status} (${g.from})` };
+    } catch (e) {
+      console.error("Graph e-mail küldési hiba:", (e as Error).message);
+      res = { ok: false, error: (e as Error).message };
+    }
+    await log(to, subject, res);
+    return res;
+  }
+  const t = transport();
+  if (!t) res = { ok: false, error: "Nincs beállítva levélküldés a szerveren (MS_TENANT_ID / MS_CLIENT_ID / MS_CLIENT_SECRET / MAIL_FROM, vagy EMAIL_USER / EMAIL_PASS)." };
   else {
     try {
       const r = await t.sendMail({ from: `"routeR by tesotter" <${process.env.EMAIL_USER}>`, to, subject, html });
@@ -66,7 +88,7 @@ export const sendTestMail = (to: string) =>
 
 /** új regisztráció: értesítés az adminnak */
 export async function notifyAdminNewUser(u: { name: string; email: string; company?: string }) {
-  const to = process.env.ROUTER_ADMIN_NOTIFY || process.env.EMAIL_USER;
+  const to = process.env.ROUTER_ADMIN_NOTIFY || process.env.MAIL_FROM || process.env.EMAIL_USER;
   if (!to) return;
   await send(to, `[routeR] Új regisztráció jóváhagyásra vár – ${u.name}`, shell(
     "Új regisztráció jóváhagyásra vár",

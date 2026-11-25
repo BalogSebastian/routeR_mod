@@ -9,7 +9,8 @@
     "lint": "eslint",
     "postinstall": "cp node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs public/",
     "check:tolls": "tsx scripts/check-tolls.mts",
-    "make-admin": "tsx --env-file=.env.local scripts/make-admin.mts"
+    "make-admin": "tsx --env-file=.env.local scripts/make-admin.mts",
+    "mail:check": "tsx --env-file=.env.local scripts/mail-check.mts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
