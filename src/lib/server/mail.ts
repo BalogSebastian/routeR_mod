@@ -9,9 +9,18 @@ const site = () => {
 };
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
+/**
+ * Küldő postafiók. EMAIL_HOST nélkül Gmail (régi beállítás); a tesotter.com-os címhez
+ * Microsoft 365: EMAIL_HOST=smtp.office365.com, EMAIL_PORT=587 (STARTTLS).
+ */
 function transport() {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return null;
-  return nodemailer.createTransport({ service: "gmail", auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } });
+  const user = process.env.EMAIL_USER?.trim();
+  const pass = process.env.EMAIL_PASS;
+  if (!user || !pass) return null;
+  const host = process.env.EMAIL_HOST?.trim();
+  if (!host) return nodemailer.createTransport({ service: "gmail", auth: { user, pass } });
+  const port = Number(process.env.EMAIL_PORT) || 587;
+  return nodemailer.createTransport({ host, port, secure: port === 465, requireTLS: port !== 465, auth: { user, pass } });
 }
 
 function shell(title: string, body: string, cta?: { href: string; label: string }) {
