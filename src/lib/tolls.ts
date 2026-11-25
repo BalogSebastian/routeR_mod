@@ -83,17 +83,20 @@ export const TOLL_RULES: Record<string, TollRule> = {
   HU: {
     name: "Magyarország", system: "HU-GO (km-alapú e-útdíj, J2/J3/J4/J5)",
     classes: ["motorway", "trunk", "primary"], osmToll: true,
-    rate: (v, rc, eurHuf) => {
+    rate: (v, rc, eurHuf, _at, dep) => {
       if (v.weight <= 3.5) return 0;
-      // NÚSZ 2026.01.01-i tábla, EURO VI, külterület, bruttó / 1,27 = nettó Ft/km
+      // NÚSZ díjtábla, EURO VI, külterület, bruttó / 1,27 = nettó Ft/km; 2027.01.01-től az új tábla
+      const y27 = dep >= Date.UTC(2027, 0, 1);
       const k = v.axles <= 2 ? 0 : v.axles === 3 ? 1 : v.axles === 4 ? 2 : 3;
-      const mw = [88.10, 133.45, 200.28, 214.37][k];
-      const main = [58.24, 87.72, 139.07, 149.59][k];
-      const gross = isHigh(rc, ["motorway", "trunk"]) ? mw : main;
-      return ((gross / 1.27) * ef(v, [1, 1.07, 1.15, 1.24])) / (eurHuf || 400);
+      const mw = (y27 ? [87.73, 133.27, 200.35, 214.2] : [88.10, 133.45, 200.28, 214.37])[k];
+      const main = (y27 ? [57.48, 86.94, 138.35, 148.58] : [58.24, 87.72, 139.07, 149.59])[k];
+      const high = isHigh(rc, ["motorway", "trunk"]);
+      // az EURO-felár a külső költség részből jön: főúton arányában nagyobb (J5 tábla aránya)
+      const f = high ? ef(v, [1, 1.065, 1.146, 1.226]) : ef(v, [1, 1.094, 1.21, 1.326]);
+      return (((high ? mw : main) / 1.27) * f) / (eurHuf || 400);
     },
-    note: "Gyorsforgalmi utak és főutak külön tarifával. 2026-os hivatalos díj EURO VI, külterület (bruttó Ft/km, gyorsforgalmi | főút): J2 88,10 | 58,24 · J3 133,45 | 87,72 · J4 200,28 | 139,07 · J5 214,37 | 149,59 – a kalkuláció nettó (÷1,27) összeggel számol, a megadott árfolyamon.",
-    confidence: "official", asOf: "2026.01.01 (NÚSZ / toll-charge.hu tarifatábla)", verified: true,
+    note: "Gyorsforgalmi utak és főutak külön tarifával. 2027.01.01-től (nemzetiutdij.hu, 2026.11.09): J2 87,73 | 57,48 · J3 133,27 | 86,94 · J4 200,35 | 138,35 · J5 214,20 | 148,58 Ft/km. 2026-os hivatalos díj EURO VI, külterület (bruttó Ft/km, gyorsforgalmi | főút): J2 88,10 | 58,24 · J3 133,45 | 87,72 · J4 200,28 | 139,07 · J5 214,37 | 149,59 – a kalkuláció nettó (÷1,27) összeggel számol, a megadott árfolyamon.",
+    confidence: "official", asOf: "2026.01.01 és 2027.01.01 (NÚSZ / nemzetiutdij.hu díjtábla)", verified: true,
   },
   SK: {
     name: "Szlovákia", system: "emyto (km-alapú)",
@@ -175,7 +178,7 @@ export const TOLL_RULES: Record<string, TollRule> = {
       return r * ef(v, [1, 1.17, 1.33, 1.67]);
     },
     note: "Autópálya + gyorsút, >3,5 t. 2025.11.01-től (CO₂-osztályokkal), EURO VI, nettó: R2 0,120 / R3 0,133 / R4 0,277 €/km. A Karavanke alagút külön.",
-    confidence: "source", asOf: "2025.11.01 (DARS ASECAP-előadás; a 2026.04-es díjjegyzék nem ellenőrzött)", verified: false,
+    confidence: "source", asOf: "2025.11.01 óta (DARS díjjegyzék nettó értékei, SVG / OOZ megerősítéssel)", verified: true,
   },
   HR: {
     name: "Horvátország", system: "HAC / ARZ / Bina-Istra (kapus, kategória III/IV)", classes: ["motorway"], osmToll: true,
@@ -185,19 +188,25 @@ export const TOLL_RULES: Record<string, TollRule> = {
   },
   IT: {
     name: "Olaszország", system: "Autostrade (kapus, tengelyszám szerinti osztály)", classes: ["motorway"], osmToll: true,
-    rate: (v) => {
+    rate: (v, rc) => {
+      // A22 Autobrennero 2026.01.01, nettó €/km: sík | hegyi; a Brennero–Verona út ~38%-a hegyi szakasz
+      if (rc === "a22") {
+        const [flat, mtn] = v.weight <= 3.5 ? [0.0538, 0.06369] : v.axles <= 2 ? [0.0538, 0.06369] : v.axles === 3 ? [0.07296, 0.08434] : v.axles === 4 ? [0.10883, 0.12758] : [0.12793, 0.15064];
+        return flat * 0.62 + mtn * 0.38;
+      }
       // ASPI 2026.01.01, sík szakasz, ÁFA (22%) nélkül: B/3/4/5. osztály; a hegyi szakasz ~18%-kal drágább
       const gross = v.weight <= 3.5 ? 0.07869 : v.axles <= 2 ? 0.08054 : v.axles === 3 ? 0.10615 : v.axles === 4 ? 0.16108 : 0.19034;
       return (gross / 1.22) * 1.04;
     },
-    note: "Autostrade per l'Italia 2026: 5. osztály (5+ tengely) 0,19034 €/km sík / 0,22437 €/km hegyi szakaszon ÁFA-val; 4. osztály 0,16108 / 0,18922. A22 Brennero 5. osztály nettó 0,128 (sík) / 0,151 €/km (hegyi). A kalkuláció nettó, kb. 4% hegyi-szakasz átlaggal.",
+    note: "Autostrade per l'Italia 2026: 5. osztály (5+ tengely) 0,19034 €/km sík / 0,22437 €/km hegyi szakaszon ÁFA-val; 4. osztály 0,16108 / 0,18922. A22 Brennero saját tarifával: 5. osztály nettó 0,128 (sík) / 0,151 €/km (hegyi). A kalkuláció nettó, kb. 4% hegyi-szakasz átlaggal.",
     confidence: "official", asOf: "2026.01.01 (autostrade.it, autobrennero.it)", verified: true,
   },
   FR: {
     name: "Franciaország", system: "Péage (kapus, 3. / 4. osztály)", classes: [], osmToll: true,
-    rate: (v) => (v.weight <= 3.5 ? 0.085 : v.axles <= 2 ? 0.175 : 0.255),
-    note: "4. osztály (>3,5 t, ≥3 tengely), 2026.02.01-től: Párizs–Lyon (A6) 218,70 €, Lyon–Marseille 81,70 €, Párizs–Bordeaux 187,60 € ÁFA-val → átlag ~0,30 €/km bruttó, ~0,255 €/km nettó. Az ingyenes (nem koncessziós) szakaszok az OSM toll-jelölés alapján kimaradnak.",
-    confidence: "source", asOf: "2026.02.01 (APRR, VINCI díjtáblák alapján számolt átlag)", verified: false,
+    // 2026.02.01-i hivatalos APRR / VINCI díjak alapján nettó €/km: 2. / 3. / 4. osztály
+    rate: (v) => (v.weight <= 3.5 ? 0.145 : v.axles <= 2 ? 0.205 : 0.275),
+    note: "4. osztály (>3,5 t, ≥3 tengely), 2026.02.01-től, ÁFA-val: A6 Fleury-en-Bière–Villefranche (430 km) 139,10 €, A7/A8 Lyon–Marseille 81,70 €, A10 Párizs–Bordeaux 187,60 € → nettó ~0,26–0,30 €/km (Alpokban ~0,33), átlag 0,275. 3. osztály (2 tengely) ~0,205, 2. osztály (furgon) ~0,145 €/km nettó. Az ingyenes (nem koncessziós) szakaszok az OSM toll-jelölés alapján kimaradnak.",
+    confidence: "source", asOf: "2026.02.01 (APRR, VINCI hivatalos díjtáblák alapján számolt átlag)", verified: true,
   },
   ES: {
     name: "Spanyolország", system: "Peaje (kapus AP autópályák, Pesados 1 / 2)", classes: [], osmToll: true,
@@ -391,6 +400,7 @@ export function isTolledFor(cc: string, rule: TollRule, f: EdgeFacts): boolean {
 
 /** az útdíj-tarifa osztálya: a gyorsforgalmi számú utak (M0, D1, R1, S8) autópálya-díjat fizetnek */
 export function rateClassFor(cc: string, f: EdgeFacts): string | undefined {
+  if (cc === "IT" && hasName(f, /^A ?22$/)) return "a22";
   if (["HU", "CZ", "SK", "PL"].includes(cc) && f.roadClass !== "motorway" && hasName(f, EXPRESS_REF)) return "motorway";
   if (["HU", "CZ", "SK", "PL"].includes(cc) && f.roadClass === "trunk" && !hasName(f, EXPRESS_REF)) return "primary";
   return f.roadClass;

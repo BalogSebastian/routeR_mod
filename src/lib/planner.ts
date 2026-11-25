@@ -257,7 +257,7 @@ async function analyse(parts: Part[], req: RouteRequest, id: number, unavoidable
   let roadKm = 0;
   for (const e of edges) { totalKm += e.km; if (!e.ferry) roadKm += e.km; }
 
-  const perCountry = new Map<string, { km: number; tollKm: number; cost: number }>();
+  const perCountry = new Map<string, { km: number; tollKm: number; cost: number; repKm?: number }>();
   const roadKmBy = new Map<string, Map<string, number>>();
   const specialKm = new Map<string, number>();
   const zones = buildZones(o.noGo);
@@ -333,6 +333,8 @@ async function analyse(parts: Part[], req: RouteRequest, id: number, unavoidable
       last.cost += cost;
       agg.tollKm += e.km;
       agg.cost += cost;
+      // szakaszdíjjal kiváltott km (alagút, koncesszió): a km-átlagba nem számít bele
+      if (replaced) agg.repKm = (agg.repKm ?? 0) + e.km;
       if (e.name) {
         const m = roadKmBy.get(cc) ?? new Map<string, number>();
         m.set(e.name, (m.get(e.name) ?? 0) + e.km);
@@ -374,10 +376,12 @@ async function analyse(parts: Part[], req: RouteRequest, id: number, unavoidable
       tollBreakdown.push({ country: cc, tollKm: 0, perKm: 0, fixed: 0, total: 0, note: `${name}: nincs kamion-útdíj (vagy nincs modellezve).`, roads: [], confidence: "none", asOf: "" });
       continue;
     }
-    const perKm = a.tollKm > 0 ? a.cost / a.tollKm : rule.fixedFn ? 0 : ratePerKm(rule, v, "motorway", c.eurHuf, undefined, depMs);
+    const kmBased = a.tollKm - (a.repKm ?? 0);
+    // ha minden díjköteles km szakaszdíjas (pl. A12/A13), a km-díj sor üres – a szakaszdíj külön tétel
+    const perKm = kmBased > 0.5 ? a.cost / kmBased : rule.fixedFn || a.repKm ? 0 : ratePerKm(rule, v, "motorway", c.eurHuf, undefined, depMs);
     const fixed = a.km > 0 && (rule.fixed || rule.fixedFn) ? fixedFee(rule, v) : 0;
     tollBreakdown.push({
-      country: cc, tollKm: a.tollKm, perKm, fixed,
+      country: cc, tollKm: Math.max(0, kmBased), perKm, fixed,
       total: a.cost + fixed,
       note: `${rule.system}. ${rule.note}`,
       roads: [...(roadKmBy.get(cc)?.entries() ?? [])].sort((x, y) => y[1] - x[1]).slice(0, 5).map(([n]) => n),

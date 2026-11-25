@@ -14,13 +14,20 @@ const CASES: Record<string, [number, number][]> = {
   "Varsó–Prága": [[52.2297, 21.0122], [50.0755, 14.4378]],
   "Szeged–Zalaegerszeg (HU főutak)": [[46.253, 20.148], [46.842, 16.842]],
   "Kassel–Nürnberg": [[51.3127, 9.4797], [49.4521, 11.0767]],
+  "München–Verona (A22 saját tarifa)": [[48.1351, 11.582], [45.4384, 10.9916]],
+  "Párizs–Lyon (A6, APRR)": [[48.8566, 2.3522], [45.764, 4.8357]],
+  "Torino–Lyon (Fréjus, km-díj nélkül az alagútban)": [[45.0703, 7.6869], [45.764, 4.8357]],
+  "Berlin–Poznań (A2 koncesszió)": [[52.52, 13.405], [52.4064, 16.9252]],
+  "Budapest–Bécs 2027 (új HU-tábla)": [[47.4979, 19.0402], [48.2082, 16.3738]],
+  "Budapest–Madrid (darabolt, >1500 km)": [[47.4979, 19.0402], [40.4168, -3.7038]],
 };
+const DEP: Record<string, string> = { "Budapest–Bécs 2027 (új HU-tábla)": "2027-01-12T06:00" };
 
 const only = process.argv[2];
 for (const [name, pts] of Object.entries(CASES)) {
   if (only && !name.toLowerCase().includes(only.toLowerCase())) continue;
   const waypoints = pts.map(([lat, lon], i) => ({ lat, lon, label: `P${i}` }));
-  const req = { waypoints, vehicle, costs: DEFAULT_COSTS, options: { avoidTolls: false, avoidHighways: false, departure: "2026-11-17T06:00" } };
+  const req = { waypoints, vehicle, costs: DEFAULT_COSTS, options: { avoidTolls: false, avoidHighways: false, departure: DEP[name] ?? "2026-11-17T06:00" } };
   const { routes } = await planRoutes(req as never);
   const r = routes[0];
   console.log(`\n=== ${name}: ${r.distanceKm.toFixed(0)} km, útdíj összesen ${r.tollTotalEur.toFixed(2)} € (pontosság ${(r.tollConfidence * 100).toFixed(0)}%)`);

@@ -13,7 +13,7 @@ export interface SpecialToll {
   test: (names: string[], cc: string, at: [number, number]) => boolean;
   /** a szakasz teljes hossza (km): részleges áthaladásnál arányosan számolunk */
   sectionKm?: number;
-  /** a szakaszon a km-alapú országos útdíj helyett ez a díj fizetendő (AT Sondermaut) */
+  /** a szakaszon a km-alapú országos útdíj helyett ez a díj fizetendő (AT Sondermaut, alagútdíjak) */
   replacesKm?: boolean;
   /** legalább ennyi km egyező él kell az érvényesítéshez */
   minKm: number;
@@ -31,7 +31,8 @@ export const SPECIALS: SpecialToll[] = [
     id: "frejus", name: "Fréjus közúti alagút (T4, IT–FR, 12,9 km)", country: "FR/IT",
     // csak maga az alagút (név vagy T4 jelzés) a portálok környékén – az „Autostrada del Frejus” (A32) nem
     test: (n, cc, [x, y]) => (cc === "IT" || cc === "FR") && x > 6.6 && x < 6.75 && y > 45.06 && y < 45.22 && any(n, /(traforo|tunnel)[^,]*fr[eé]jus|^T ?4$/i),
-    minKm: 8,
+    // az alagút díja a km-alapú autópályadíjat váltja ki (az alagút km-ét nem számoljuk kétszer)
+    minKm: 8, replacesKm: true,
     fees: [46.2, 167.9, 337.4, 337.4],
     note: "Egy irányra, nettó 337,40 € (ÁFA-val: 411,60 € olasz / 404,90 € francia oldalon). 4. osztály (≥3 tengely, EURO 5–6): 411,60 € bruttó (SITAF, 2026.01.01-től, olasz oldal; francia oldalon ~404,90 €). 2 tengely: 204,80 €. EURO 0–4 kamion kitiltva.",
     confidence: "official", asOf: "2026.01.01 (SITAF)",
@@ -39,7 +40,8 @@ export const SPECIALS: SpecialToll[] = [
   {
     id: "montblanc", name: "Mont Blanc alagút (FR–IT, 11,6 km)", country: "FR/IT",
     test: (n) => any(n, /tunnel du mont[- ]blanc|traforo del monte bianco/i),
-    minKm: 8,
+    // az alagút díja a km-alapú autópályadíjat váltja ki (az alagút km-ét nem számoljuk kétszer)
+    minKm: 8, replacesKm: true,
     fees: [46.2, 167.9, 337.4, 337.4],
     note: "Egy irányra, nettó ~337,40 € (ÁFA-val). 4. osztály: ~411,60 € (olasz oldal) / ~404,90 € (francia oldal) – a 2025-ös hivatalos díj +1,19% (2026). EURO 0–4 kamion kitiltva.",
     confidence: "source", asOf: "2026 (ATMB/GEIE-TMB 2025 × 1,0119)",
@@ -199,8 +201,8 @@ export const SPECIALS: SpecialToll[] = [
     id: "pl-a2", name: "A2 Świecko – Konin koncessziós autópálya (PL, 255 km)", country: "PL",
     test: (n, cc, [x]) => cc === "PL" && x < 18.25 && any(n, /^A ?2$/i),
     minKm: 5, sectionKm: 255, replacesKm: true,
-    fees: [30, 102, 102, 102],
-    note: "Autostrada Wielkopolska, 4. kategória (2026.09.11-től): teljes szakasz 535 zł bruttó (≈ 102 € nettó), a megtett km arányában.",
+    fees: [27, 48.4, 69.6, 102.3],
+    note: "Autostrada Wielkopolska (2026.09.11-től, hivatalos): teljes Świecko–Konin bruttó 1. kat. 141 / 2. kat. 253 / 3. kat. 364 / 4. kat. 535 zł (≈ 27 / 48 / 70 / 102 € nettó), a megtett km arányában. Ebből Świecko–Nowy Tomyśl 40 zł, Nowy Tomyśl–Konin 3 × 165 zł.",
     confidence: "official", asOf: "2026.09.11 (autostrada-a2.pl)",
   },
   {
