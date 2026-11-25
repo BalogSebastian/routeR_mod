@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export interface AdminUser { id: string; name: string; email: string; company?: string; role: "user" | "admin"; status: "pending" | "active" | "blocked"; createdAt: string; lastLoginAt?: string; trips: number }
 
@@ -11,6 +11,21 @@ export default function AdminUsers({ initial, me }: { initial: AdminUser[]; me: 
   const [users, setUsers] = useState(initial);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
+
+  // új regisztrációk újratöltés nélkül: 20 másodpercenként és amikor visszatérsz a fülre
+  const refresh = useCallback(async () => {
+    if (document.visibilityState !== "visible") return;
+    const res = await fetch("/api/admin/users", { cache: "no-store" }).catch(() => null);
+    if (!res?.ok) return;
+    const j = (await res.json().catch(() => null)) as { users?: AdminUser[] } | null;
+    if (j?.users) setUsers(j.users);
+  }, []);
+  useEffect(() => {
+    const id = window.setInterval(refresh, 20_000);
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+    return () => { window.clearInterval(id); document.removeEventListener("visibilitychange", refresh); window.removeEventListener("focus", refresh); };
+  }, [refresh]);
 
   const patch = async (u: AdminUser, body: Partial<Pick<AdminUser, "status" | "role">>) => {
     setBusy(u.id); setError("");
