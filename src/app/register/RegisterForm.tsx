@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import AuthShell from "@/components/app/AuthShell";
 
-export default function RegisterPage() {
+export default function RegisterForm({ current }: { current: { name: string; email: string } | null }) {
+  const [loggingOut, setLoggingOut] = useState(false);
   const [f, setF] = useState({ name: "", email: "", company: "", password: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -15,8 +16,9 @@ export default function RegisterPage() {
     const q = new URLSearchParams(h);
     const pick = (k: string) => (q.get(k) ?? "").slice(0, 200);
     requestAnimationFrame(() => setF((x) => ({ ...x, name: x.name || pick("name"), email: x.email || pick("email"), company: x.company || pick("company") })));
-    history.replaceState(null, "", window.location.pathname + window.location.search);
-  }, []);
+    // belépett állapotban a hash marad: kilépés + újratöltés után is előtöltve jön
+    if (!current) history.replaceState(null, "", window.location.pathname + window.location.search);
+  }, [current]);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF((x) => ({ ...x, [k]: e.target.value }));
 
   const submit = async (e: React.FormEvent) => {
@@ -40,9 +42,34 @@ export default function RegisterPage() {
   return (
     <AuthShell
       title="Fiók létrehozása"
-      subtitle="A regisztráció után jóváhagyjuk a hozzáférésedet."
+      subtitle="A regisztrációdat elbíráljuk, és e-mailben értesítünk, hogy megadjuk-e a hozzáférést."
       footer={<>Van már fiókod? <Link href="/login" className="font-bold text-black underline decoration-[#00ff9d] decoration-[3px] underline-offset-4 transition hover:bg-[#00ff9d] hover:no-underline">Belépés</Link></>}
     >
+      {current ? (
+        <div className="space-y-5">
+          <div className="border-l-4 border-[#00ff9d] bg-[#f4f4f1] p-4 text-sm leading-relaxed text-slate-600">
+            Ebben a böngészőben jelenleg <b className="text-slate-800">{current.name}</b> (<b className="text-slate-800">{current.email}</b>) fiókjával vagy belépve.
+            Új fiók létrehozásához előbb lépj ki.
+          </div>
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <button
+              className="btn-primary flex-1"
+              disabled={loggingOut}
+              onClick={async () => {
+                setLoggingOut(true);
+                await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+                // teljes újratöltés a hash-sel együtt: az előtöltött adatok megmaradnak
+                window.location.reload();
+              }}
+            >
+              {loggingOut ? "Kilépés…" : "Kilépés és új fiók"}
+            </button>
+            <a href="/app" className="flex-1 border-2 border-black px-5 py-3 text-center text-[13px] font-extrabold uppercase tracking-[0.16em] text-black transition hover:bg-black hover:text-white">
+              Tovább a fiókomba
+            </a>
+          </div>
+        </div>
+      ) : (
       <form onSubmit={submit} className="space-y-6">
         {error && <p className="border-l-4 border-rose-500 bg-rose-50 px-3.5 py-2.5 text-[13px] font-medium text-rose-700">{error}</p>}
         <label className="block"><span className="label-xs">Név</span>
@@ -54,7 +81,9 @@ export default function RegisterPage() {
         <label className="block"><span className="label-xs">Jelszó</span>
           <input className="input-lg" type="password" required minLength={8} autoComplete="new-password" value={f.password} onChange={set("password")} placeholder="legalább 8 karakter" /></label>
         <button className="btn-primary mt-2 w-full !py-4" disabled={busy || !f.name || !f.email || f.password.length < 8}>{busy ? "Létrehozás…" : "Regisztráció"}</button>
+        <p className="text-[12.5px] leading-relaxed text-slate-500">A regisztráció után e-mailben visszaigazoljuk a kérésedet, majd az elbírálás után újra írunk: megkapod-e a hozzáférést.</p>
       </form>
+      )}
     </AuthShell>
   );
 }

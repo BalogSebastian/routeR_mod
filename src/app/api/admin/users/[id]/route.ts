@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ApiError, apiError, requireAdmin } from "@/lib/server/auth";
-import { sendApproved } from "@/lib/server/mail";
+import { sendApproved, sendRejected } from "@/lib/server/mail";
 import { getDb, isOid } from "@/lib/server/models";
 
 const schema = z.object({ status: z.enum(["pending", "active", "blocked"]).optional(), role: z.enum(["user", "admin"]).optional() });
@@ -22,6 +22,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (input.status === "blocked" || input.status === "pending" || input.role) update.$inc = { sessionVersion: 1 };
     await User.updateOne({ _id: id }, update);
     if (input.status === "active" && before.status !== "active") await sendApproved(before.email, before.name);
+    // jóváhagyásra váró kérelem elutasítása: erről is szólunk
+    if (input.status === "blocked" && before.status === "pending") await sendRejected(before.email, before.name);
     return Response.json({ ok: true });
   } catch (e) {
     return apiError(e);

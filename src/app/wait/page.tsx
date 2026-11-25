@@ -14,7 +14,7 @@ export default async function WaitPage() {
       <div className="space-y-4 text-sm leading-relaxed text-slate-600">
         <div className="flex items-start gap-3 border-l-4 border-[#00ff9d] bg-[#f4f4f1] p-4">
           <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-black text-xs font-bold text-[#00ff9d]">1</span>
-          <p>Átnézzük a regisztrációdat, és <b className="text-slate-800">{u.email}</b> címre értesítést küldünk a jóváhagyásról.</p>
+          <p>Átnézzük a regisztrációdat, és a <b className="text-slate-800">{u.email}</b> címre e-mailben megírjuk a döntést: megadjuk-e a hozzáférést.</p>
         </div>
         <p className="text-[13px] text-slate-500">Ha már jóváhagytuk, frissítsd az oldalt.</p>
         <div className="flex flex-col gap-4 pt-2 sm:flex-row">

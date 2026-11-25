@@ -75,6 +75,22 @@ export async function sendApproved(to: string, name: string) {
   ));
 }
 
+/** regisztráció után: visszaigazolás a felhasználónak, hogy elbíráljuk a kérését */
+export async function sendRegistrationReceived(to: string, name: string) {
+  await send(to, "[routeR] Megkaptuk a regisztrációdat", shell(
+    "Megkaptuk a regisztrációdat",
+    `Szia ${esc(name)}! Köszönjük, hogy regisztráltál a routeR-be. A kérésedet hamarosan elbíráljuk, és <b>e-mailben értesítünk</b>, hogy megadjuk-e a hozzáférést.`,
+  ));
+}
+
+/** elutasítás (függő fiók tiltása): értesítés a felhasználónak */
+export async function sendRejected(to: string, name: string) {
+  await send(to, "[routeR] A hozzáférési kérelmedről", shell(
+    "A hozzáférési kérelmedről",
+    `Szia ${esc(name)}! Köszönjük az érdeklődésed a routeR iránt. A regisztrációdat átnéztük, de most nem tudunk hozzáférést adni. Ha kérdésed van, válaszolj erre a levélre, vagy írj nekünk a tesotter.com oldalon.`,
+  ));
+}
+
 /** jelszó-visszaállító link (1 óráig érvényes, egyszer használható) */
 export async function sendPasswordReset(to: string, name: string, token: string) {
   await send(to, "[routeR] Jelszó visszaállítása", shell(

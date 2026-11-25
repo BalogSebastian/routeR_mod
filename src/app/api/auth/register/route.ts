@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { apiError, hashPassword, passwordSchema, startSession } from "@/lib/server/auth";
-import { notifyAdminNewUser } from "@/lib/server/mail";
+import { notifyAdminNewUser, sendRegistrationReceived } from "@/lib/server/mail";
 import { getDb } from "@/lib/server/models";
 import { clientIp, rateLimit } from "@/lib/server/ratelimit";
 
@@ -23,7 +23,10 @@ export async function POST(req: Request) {
       passwordHash: await hashPassword(input.password), role: "user", status: "pending",
     });
     await startSession(user.toObject());
-    await notifyAdminNewUser({ name: input.name, email: input.email, company: input.company });
+    await Promise.all([
+      notifyAdminNewUser({ name: input.name, email: input.email, company: input.company }),
+      sendRegistrationReceived(input.email, input.name),
+    ]);
     return Response.json({ ok: true, status: "pending" });
   } catch (e) {
     if ((e as { code?: number }).code === 11000) return Response.json({ error: "Ezzel az e-mail címmel már van fiók." }, { status: 409 });
