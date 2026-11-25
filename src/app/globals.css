@@ -256,3 +256,7 @@ details > summary::-webkit-details-marker { display: none; }
   .rr-env, .rr-burst, .rr-flash { display: none; }
   .rr-stack > *, .rr-draw, .rr-rise, .rr-up, .rr-write, .rr-stamp, .rr-letter, .rr-backdrop, .rr-card-in { animation-duration: 0.01s; animation-delay: 0s !important; }
 }
+
+/* görgethető, de látható görgetősáv nélküli panel (oldalsáv) */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 import { driverTrip, encodeTrip, googleLinks, gpxFor, navPoints, simplify } from "@/lib/navlinks";
 import { dt, dur } from "@/lib/format";
+import { newLinkId } from "@/lib/app-data";
 import type { RouteResult, Waypoint } from "@/lib/types";
 
 interface Props {
@@ -45,12 +46,34 @@ export default function DriverSend({ route, waypoints, departure }: Props) {
   const [qr, setQr] = useState("");
   const [copied, setCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
+  /** követett link: új útvonalnál új azonosító; a sofőr-oldal megnyitáskor jelez vissza */
+  const [link, setLink] = useState<{ id: string; enc: string } | null>(null);
+  const [driver, setDriver] = useState("");
+  const [tracked, setTracked] = useState<"" | "ok" | "error">("");
 
   useEffect(() => {
     let alive = true;
-    void encodeTrip(trip).then((enc) => { if (alive) setPageUrl(`${window.location.origin}/sofor#d=${enc}`); });
+    const id = newLinkId();
+    void encodeTrip(trip).then((enc) => {
+      if (!alive) return;
+      setTracked("");
+      setLink({ id, enc });
+      setPageUrl(`${window.location.origin}/sofor#d=${enc}&l=${id}`);
+    });
     return () => { alive = false; };
   }, [trip]);
+
+  /** küldéskor a link bekerül a Sofőr-linkek közé (a hálózati hiba a küldést nem akasztja meg) */
+  const track = (channel: string) => {
+    if (!link) return;
+    const [from, to] = trip.t.split("→").map((x) => x.trim());
+    void fetch("/api/driver-links", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: link.id, tripName: trip.t, from: from ?? "", to: to ?? "", km: trip.km, dep: trip.dep, arr: trip.arr, driver: driver.trim() || undefined, channel, d: link.enc }),
+      keepalive: link.enc.length < 60_000,
+    }).then((r) => setTracked(r.ok ? "ok" : "error")).catch(() => setTracked("error"));
+  };
 
   useEffect(() => {
     if (!showQr || !links[0]) return;
@@ -74,13 +97,14 @@ export default function DriverSend({ route, waypoints, departure }: Props) {
 
   const share = async () => {
     if (navigator.share) {
-      try { await navigator.share({ title: trip.t, text }); return; } catch { /* megszakítva */ }
+      try { await navigator.share({ title: trip.t, text }); track("share"); return; } catch { /* megszakítva */ }
     }
     await copy();
   };
   const copy = async () => {
     try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }
     catch { window.prompt("Másold ki az üzenetet:", text); }
+    track("copy");
   };
   const enc = encodeURIComponent(text);
 
@@ -90,13 +114,17 @@ export default function DriverSend({ route, waypoints, departure }: Props) {
       <p className="mb-2.5 text-[11px] leading-snug text-slate-600 dark:text-slate-400">
         A sofőr a linkre koppintva azonnal indítja a Google Maps navigációt a kamionos útvonalon: a megállók mellett {points.filter((p) => !p.stop).length} irányító pontot (határátkelők, kompok, köztes pontok) is kap, hogy a Google ne térjen el tőle{links.length > 1 ? `; ${links.length} szakasz (a Google linkenként max. 9 köztes pontot fogad)` : ""}.
       </p>
+      <label className="mb-2 flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-xs shadow-sm dark:bg-slate-900">
+        <span className="shrink-0 font-semibold text-slate-500">Kinek?</span>
+        <input value={driver} onChange={(e) => setDriver(e.target.value)} maxLength={80} placeholder="sofőr neve vagy rendszám (nem kötelező)" className="min-w-0 flex-1 bg-transparent py-1 outline-none placeholder:text-slate-400" />
+      </label>
       <div className="grid grid-cols-2 gap-2">
         <button className="btn !justify-center !bg-blue-600 !text-white hover:!bg-blue-700" onClick={share}>📤 Küldés…</button>
         <button className="btn !justify-center" onClick={copy}>{copied ? "Másolva ✓" : "📋 Üzenet másolása"}</button>
-        <a className="btn !justify-center" href={`https://wa.me/?text=${enc}`} target="_blank" rel="noreferrer">WhatsApp</a>
-        <a className="btn !justify-center" href={`viber://forward?text=${enc}`}>Viber</a>
-        <a className="btn !justify-center" href={`mailto:?subject=${encodeURIComponent("Útvonal: " + trip.t)}&body=${enc}`}>E-mail</a>
-        <a className="btn !justify-center" href={`sms:?&body=${enc}`}>SMS</a>
+        <a className="btn !justify-center" href={`https://wa.me/?text=${enc}`} target="_blank" rel="noreferrer" onClick={() => track("whatsapp")}>WhatsApp</a>
+        <a className="btn !justify-center" href={`viber://forward?text=${enc}`} onClick={() => track("viber")}>Viber</a>
+        <a className="btn !justify-center" href={`mailto:?subject=${encodeURIComponent("Útvonal: " + trip.t)}&body=${enc}`} onClick={() => track("email")}>E-mail</a>
+        <a className="btn !justify-center" href={`sms:?&body=${enc}`} onClick={() => track("sms")}>SMS</a>
       </div>
       <div className="mt-2.5 space-y-1.5">
         {links.map((l) => (
@@ -117,6 +145,13 @@ export default function DriverSend({ route, waypoints, departure }: Props) {
           <div className="h-36 w-36 shrink-0 rounded-lg bg-white p-1.5" dangerouslySetInnerHTML={{ __html: qr }} />
           <p className="text-[11px] leading-snug text-slate-600 dark:text-slate-400">A sofőr a telefon kamerájával beolvassa, és {links.length > 1 ? "az 1. szakasz" : "a"} navigáció rögtön indul a Google Maps-ben.</p>
         </div>
+      )}
+      {tracked && (
+        <p className={`mt-2 text-[11px] leading-snug ${tracked === "ok" ? "text-emerald-700 dark:text-emerald-400" : "text-slate-500"}`}>
+          {tracked === "ok"
+            ? <>✓ A link a <a href="/app/drivers" className="font-semibold underline">Sofőr-linkek</a> között: látni fogod, amikor a sofőr megnyitja.</>
+            : "A küldés rendben, de a linket most nem sikerült a Sofőr-linkek közé menteni."}
+        </p>
       )}
       <p className="mt-2 text-[10px] leading-snug text-slate-500">
         A Google Maps és a Waze személyautós útvonalat számol (nem ismeri a kamionos korlátozásokat) – az irányító pontok a megtervezett nyomvonalon tartják. Pontos kamionos nyomvonal-követéshez: OsmAnd (ingyenes) → GPX importálása → „Navigáció a nyomvonal mentén”.

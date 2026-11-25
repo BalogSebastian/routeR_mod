@@ -201,3 +201,54 @@ export function banWarnings(
   }
   return out;
 }
+
+/* ---------- kamionstop-figyelő (menü, naptár) ---------- */
+
+export interface UpcomingBan {
+  cc: string;
+  /** kezdete és vége közép-európai „naiv” időben (UTC-mezőkkel olvasandó) */
+  start: number;
+  end: number;
+  /** most érvényben van */
+  active: boolean;
+  /** ünnepnap (vagy ünnep előtti este) miatt */
+  holiday: boolean;
+  minWeight: number;
+}
+
+/** a közép-európai (budapesti) falióra-idő „naiv” ms-ben, a menetrend-motor időformátumában */
+export function cetNow(d = new Date()): number {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Budapest", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", hourCycle: "h23" })
+      .formatToParts(d).map((x) => [x.type, x.value]),
+  );
+  return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute);
+}
+
+/**
+ * A következő `days` nap kamion-forgalmi tilalmai minden ismert országban (legkorábbi elöl).
+ * Az időpontok közép-európai időben vannak, a helyi időeltolást (pl. RO, GB) átszámolva.
+ * all=false: a svájci napi éjszakai tilalomból csak a legközelebbi (a menü rövid listájához).
+ */
+export function upcomingBans(nowCet: number, days = 7, weight = 40, all = false): UpcomingBan[] {
+  const out: UpcomingBan[] = [];
+  for (const cc of Object.keys(BANS)) {
+    if (!applies(cc, weight)) continue;
+    const a = toLocal(cc, nowCet);
+    const b = a + days * DAY_MS;
+    for (const [s, e] of windows(cc, a, b)) {
+      if (e <= a || s >= b) continue;
+      let holiday = false;
+      for (let d = Math.floor(s / DAY_MS) * DAY_MS; d < e; d += DAY_MS) if (isHoliday(cc, d)) holiday = true;
+      out.push({ cc, start: fromLocal(cc, s), end: fromLocal(cc, e), active: s <= a && a < e, holiday, minWeight: BANS[cc].minWeight });
+    }
+  }
+  // a svájci napi éjszakai tilalomból csak a legközelebbi (különben elárasztaná a listát)
+  let ch = 0;
+  return out
+    .sort((x, y) => x.start - y.start || x.cc.localeCompare(y.cc))
+    .filter((x) => all || x.cc !== "CH" || x.end - x.start > 10 * 3600_000 || ch++ < 1);
+}
+
+/** az ország szabályának szöveges leírása */
+export const banText = (cc: string) => BANS[cc]?.text ?? "";

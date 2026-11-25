@@ -41,6 +41,19 @@ export default function DriverView() {
     try { return JSON.parse(localStorage.getItem(key) ?? "[]"); } catch { return []; }
   });
 
+  // követett link (#…&l=<id>): a megnyitás jelzése a diszpécsernek, böngészőnként fél óránként legfeljebb egyszer
+  useEffect(() => {
+    const id = window.location.hash.match(/[#&]l=([A-Za-z0-9_-]{12,32})/)?.[1];
+    if (!id) return;
+    const k = `routeR.opened.${id}`;
+    try {
+      const last = Number(localStorage.getItem(k) ?? 0);
+      if (Date.now() - last < 30 * 60_000) return;
+      localStorage.setItem(k, String(Date.now()));
+    } catch { /* tiltott tároló: ilyenkor is jelzünk */ }
+    void fetch(`/api/driver-links/${id}/open`, { method: "POST", keepalive: true }).catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (!hash) return;
     decodeTrip(hash).then(setTrip).catch(() => setErr("A link sérült vagy hiányos – kérd újra a diszpécsertől."));

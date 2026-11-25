@@ -51,13 +51,13 @@ export function mailChannel(): string {
   return "nincs beállítva";
 }
 
-async function send(to: string, subject: string, html: string, fromName?: string): Promise<SendResult> {
+async function send(to: string, subject: string, html: string, fromName?: string, replyTo?: string): Promise<SendResult> {
   let res: SendResult;
   const g = graphConfig();
   if (g) {
     // Microsoft 365 / Graph: elsődleges csatorna, ha be van állítva
     try {
-      const r = await sendViaGraph(fromName ? { ...g, fromName } : g, { to, subject, html });
+      const r = await sendViaGraph(fromName ? { ...g, fromName } : g, { to, subject, html, replyTo });
       res = { ok: true, accepted: [to], response: `Graph ${r.status} (${g.from})` };
     } catch (e) {
       console.error("Graph e-mail küldési hiba:", (e as Error).message);
@@ -70,7 +70,7 @@ async function send(to: string, subject: string, html: string, fromName?: string
   if (!t) res = { ok: false, error: "Nincs beállítva levélküldés a szerveren (MS_TENANT_ID / MS_CLIENT_ID / MS_CLIENT_SECRET / MAIL_FROM, vagy EMAIL_USER / EMAIL_PASS)." };
   else {
     try {
-      const r = await t.sendMail({ from: `"${fromName ?? "routeR by tesotter"}" <${process.env.EMAIL_USER}>`, to, subject, html });
+      const r = await t.sendMail({ from: `"${fromName ?? "routeR by tesotter"}" <${process.env.EMAIL_USER}>`, to, subject, html, replyTo });
       res = r.accepted?.length
         ? { ok: true, accepted: r.accepted as string[], response: r.response }
         : { ok: false, error: `A levelet a szerver nem fogadta el: ${r.rejected?.join(", ") ?? "ismeretlen ok"}`, response: r.response };
@@ -174,4 +174,15 @@ export async function sendPasswordReset(to: string, name: string, token: string)
     afterCta: "Ha nem te kérted, nyugodtan hagyd figyelmen kívül ezt a levelet: a jelszavad nem változik.",
     why: "Ezt a levelet azért kaptad, mert a routeR-ben jelszó-visszaállítást kértek ehhez a címhez.",
   }));
+}
+
+/** a felhasználó üzenete a menüből („Kérdésed van? Írj nekünk”): a csapathoz fut be, válasz közvetlenül a felhasználónak */
+export async function sendFeedback(u: { name: string; email: string; company?: string }, topic: string, message: string, page?: string) {
+  const to = process.env.ROUTER_ADMIN_NOTIFY || process.env.MAIL_FROM || process.env.EMAIL_USER;
+  if (!to) return { ok: false, error: "Nincs beállítva címzett." } as SendResult;
+  const body = esc(message).replace(/\n/g, "<br/>");
+  return send(to, `[routeR üzenet] ${topic} – ${u.name}`, shell(
+    `Üzenet: ${esc(topic)}`,
+    `<b>${esc(u.name)}</b> (${esc(u.email)})${u.company ? ` · ${esc(u.company)}` : ""}${page ? `<br/><span style="color:#888">Oldal: ${esc(page)}</span>` : ""}<br/><br/>${body}<br/><br/><span style="color:#888">Válaszolj erre a levélre: közvetlenül a felhasználónak megy.</span>`,
+  ), "routeR üzenet", u.email);
 }

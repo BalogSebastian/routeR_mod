@@ -68,6 +68,8 @@ const RAIL = [
   { href: "/app", label: "Irányítópult", icon: "M3 12l9-8 9 8M5 10v10h5v-6h4v6h5V10", active: false },
   { href: "/planner", label: "Útvonaltervező", icon: "M5 19a2 2 0 100-4 2 2 0 000 4zM19 9a2 2 0 100-4 2 2 0 000 4zM7 17c6 0 2-10 8-10", active: true },
   { href: "/app/trips", label: "Fuvaraim", icon: "M4 6h16M4 12h16M4 18h10", active: false },
+  { href: "/app/vehicles", label: "Járműveim", icon: "M2 7h12v9H2zM14 10h4.5L22 13.5V16h-8M6.5 19.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM17.5 19.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6z", active: false },
+  { href: "/app/drivers", label: "Sofőr-linkek", icon: "M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z", active: false },
   { href: "/app/settings", label: "Fiók", icon: "M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6", active: false },
 ];
 const NONE: BorderCrossing[] = [];
@@ -119,7 +121,12 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
   const [waypoints, setWaypoints] = useState<(Waypoint | null)[]>(() => (shared.w && shared.w.length >= 2 ? shared.w : [null, null]));
   const [fleet, setFleet] = useState<FleetItem[]>(() => saved.fleet ?? []);
   const [defaultFleet, setDefaultFleet] = useState<string | undefined>(saved.defaultFleet);
-  const [vehicle, setVehicle] = useState<Vehicle>(() => shared.v ?? (saved.fleet ?? []).find((f) => f.id === saved.defaultFleet)?.v ?? saved.vehicle ?? VEHICLE_PRESETS[0].v);
+  const [vehicle, setVehicle] = useState<Vehicle>(() => {
+    // a Járműveim oldal „Tervezés ezzel” gombja: /planner?vehicle=<flotta-azonosító>
+    const pick = new URLSearchParams(window.location.search).get("vehicle");
+    const fromFleet = pick ? (saved.fleet ?? []).find((f) => f.id === pick)?.v : undefined;
+    return fromFleet ?? shared.v ?? (saved.fleet ?? []).find((f) => f.id === saved.defaultFleet)?.v ?? saved.vehicle ?? VEHICLE_PRESETS[0].v;
+  });
   const [costs, setCosts] = useState<CostInputs>(() => loadCosts(saved));
   const [options, setOptions] = useState<RouteOptions>(() => ({
     avoidTolls: false, avoidHighways: false, departure: nextDeparture(),

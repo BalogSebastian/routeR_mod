@@ -55,6 +55,31 @@ export interface ITrip {
 
 export interface IResetToken { _id: Types.ObjectId; userId: Types.ObjectId; tokenHash: string; expiresAt: Date }
 
+/**
+ * Sofőrnek elküldött útvonal-link. Az azonosítót a böngésző generálja (a link hash-ében utazik: #d=…&l=<id>),
+ * a sofőr-oldal megnyitáskor jelez vissza. A „d” a link útvonal-adata, hogy a diszpécser később újra kimásolhassa.
+ */
+export interface IDriverLink {
+  _id: string;
+  userId: Types.ObjectId;
+  tripName: string;
+  from: string;
+  to: string;
+  km: number;
+  dep?: string;
+  arr?: string;
+  /** a sofőr neve / rendszám (szabad szöveg) */
+  driver?: string;
+  /** whatsapp | viber | email | sms | copy | share | open */
+  channel?: string;
+  d: string;
+  sentAt: Date;
+  opens: number;
+  firstOpenedAt?: Date;
+  lastOpenedAt?: Date;
+  createdAt: Date;
+}
+
 export interface IMailLog { _id: Types.ObjectId; to: string; subject: string; ok: boolean; error?: string; response?: string; at: Date }
 
 export interface IRateLimit { _id: string; count: number; expiresAt: Date }
@@ -105,6 +130,29 @@ const resetSchema = new Schema<IResetToken>({
   expiresAt: { type: Date, required: true, expires: 0 },
 });
 
+const driverLinkSchema = new Schema<IDriverLink>(
+  {
+    _id: String,
+    userId: { type: Schema.Types.ObjectId, required: true, index: true },
+    tripName: { type: String, maxlength: 160 },
+    from: { type: String, maxlength: 120 },
+    to: { type: String, maxlength: 120 },
+    km: Number,
+    dep: String,
+    arr: String,
+    driver: { type: String, maxlength: 80 },
+    channel: String,
+    d: String,
+    sentAt: { type: Date, default: Date.now },
+    opens: { type: Number, default: 0 },
+    firstOpenedAt: Date,
+    lastOpenedAt: Date,
+    // 180 nap után magától törlődik
+    createdAt: { type: Date, default: Date.now, expires: 60 * 60 * 24 * 180 },
+  },
+  { versionKey: false },
+);
+
 const mailLogSchema = new Schema<IMailLog>({
   to: String, subject: String, ok: Boolean, error: String, response: String,
   at: { type: Date, default: Date.now, expires: 60 * 60 * 24 * 30 },
@@ -119,6 +167,7 @@ const nearSchema = new Schema<INearCache>({
 });
 
 export interface Db {
+  DriverLink: Model<IDriverLink>;
   NearCache: Model<INearCache>;
   MailLog: Model<IMailLog>;
   ResetToken: Model<IResetToken>;
@@ -133,6 +182,7 @@ export async function getDb(): Promise<Db> {
   if (models) return models;
   const c = await connect();
   models = {
+    DriverLink: (c.models.DriverLink as Model<IDriverLink>) ?? c.model<IDriverLink>("DriverLink", driverLinkSchema, "driverlinks"),
     NearCache: (c.models.NearCache as Model<INearCache>) ?? c.model<INearCache>("NearCache", nearSchema, "nearcache"),
     MailLog: (c.models.MailLog as Model<IMailLog>) ?? c.model<IMailLog>("MailLog", mailLogSchema, "maillog"),
     ResetToken: (c.models.ResetToken as Model<IResetToken>) ?? c.model<IResetToken>("ResetToken", resetSchema, "resettokens"),

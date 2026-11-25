@@ -13,7 +13,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (u.status !== "active") redirect("/wait");
   return (
     <div className={`${appFont.variable} driver-root`}>
-      <AppShell user={{ name: u.name, email: u.email, admin: u.role === "admin" }}>{children}</AppShell>
+      <AppShell user={{ name: u.name, email: u.email, company: u.company, admin: u.role === "admin" }}>{children}</AppShell>
     </div>
   );
 }
