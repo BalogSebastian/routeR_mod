@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { graphConfig, sendViaGraph } from "./graph-mail";
+import { firstName, routerMailHtml } from "./mail-template";
 import { getDb } from "./models";
 
 /** az e-mailekben lévő linkek alapcíme: mindig a publikus cím, soha nem localhost */
@@ -50,13 +51,13 @@ export function mailChannel(): string {
   return "nincs beállítva";
 }
 
-async function send(to: string, subject: string, html: string): Promise<SendResult> {
+async function send(to: string, subject: string, html: string, fromName?: string): Promise<SendResult> {
   let res: SendResult;
   const g = graphConfig();
   if (g) {
     // Microsoft 365 / Graph: elsődleges csatorna, ha be van állítva
     try {
-      const r = await sendViaGraph(g, { to, subject, html });
+      const r = await sendViaGraph(fromName ? { ...g, fromName } : g, { to, subject, html });
       res = { ok: true, accepted: [to], response: `Graph ${r.status} (${g.from})` };
     } catch (e) {
       console.error("Graph e-mail küldési hiba:", (e as Error).message);
@@ -69,7 +70,7 @@ async function send(to: string, subject: string, html: string): Promise<SendResu
   if (!t) res = { ok: false, error: "Nincs beállítva levélküldés a szerveren (MS_TENANT_ID / MS_CLIENT_ID / MS_CLIENT_SECRET / MAIL_FROM, vagy EMAIL_USER / EMAIL_PASS)." };
   else {
     try {
-      const r = await t.sendMail({ from: `"routeR by tesotter" <${process.env.EMAIL_USER}>`, to, subject, html });
+      const r = await t.sendMail({ from: `"${fromName ?? "routeR by tesotter"}" <${process.env.EMAIL_USER}>`, to, subject, html });
       res = r.accepted?.length
         ? { ok: true, accepted: r.accepted as string[], response: r.response }
         : { ok: false, error: `A levelet a szerver nem fogadta el: ${r.rejected?.join(", ") ?? "ismeretlen ok"}`, response: r.response };
@@ -97,36 +98,80 @@ export async function notifyAdminNewUser(u: { name: string; email: string; compa
   ));
 }
 
-/** jóváhagyás után: értesítés a felhasználónak */
+/** az aláírt levelek feladóneve */
+const SEBASTIAN = "Balog Sebastian Máté · routeR";
+
+/** jóváhagyás után: értesítés a felhasználónak (látványos routeR-levél, belépő gombbal) */
 export async function sendApproved(to: string, name: string) {
-  await send(to, "[routeR] A hozzáférésed aktiválva", shell(
-    "Hozzáférés aktiválva",
-    `Szia ${esc(name)}! A fiókodat jóváhagytuk, mostantól használhatod a routeR kamion-útvonaltervezőt.`,
-    { href: `${site()}/login`, label: "Belépés" },
-  ));
+  await send(to, "Jóváhagytuk a routeR-hozzáférésedet", routerMailHtml({
+    preheader: "Jóváhagytuk a hozzáférésedet: mostantól beléphetsz a routeR-be és tervezheted az első fuvarodat.",
+    kicker: "Hozzáférés · jóváhagyva",
+    title: `Jóváhagyva,<br>${esc(firstName(name))}.`,
+    accent: "Indulhat az első fuvar.",
+    paragraphs: [
+      `Kedves ${esc(name)}!`,
+      "Örömmel írom, hogy a <b>routeR</b>-hozzáférésedet jóváhagytuk. Mostantól a saját fiókodban tervezheted a fuvarjaidat: kamionra szabott útvonal, útdíj 27 országban, komp és vasút, pihenők és valós érkezési idő, egy helyen.",
+    ],
+    callout: { label: "JÓ MUNKÁT KÍVÁNUNK", html: "Köszönjük a bizalmat. Reméljük, a routeR sok időt és pénzt spórol neked, és <b style=\"color:#00FF9D\">szerencsés utakat</b> kívánunk minden fuvarodhoz!" },
+    steps: [
+      { t: "Lépj be", d: "Az e-mail-címeddel és a regisztrációkor megadott jelszavaddal." },
+      { t: "Add meg a kamionodat", d: "Az Új útvonal oldalon a jármű-kártyán: méret, tömeg, tengelyek, EURO-norma, ADR." },
+      { t: "Tervezd meg az első fuvart", d: "Útdíjjal, menetrenddel és teljes költséggel, majd küldd el a sofőrnek egy linkben." },
+    ],
+    cta: { href: `${site()}/login`, label: "Belépés a routeR-be" },
+    afterCta: `Elfelejtetted a jelszavad? <a href="${site()}/forgot" style="color:#000">Új jelszót itt kérhetsz.</a>`,
+    signed: true,
+    why: "Ezt a levelet azért kaptad, mert regisztráltál a routeR-be, és jóváhagytuk a hozzáférésedet.",
+  }), SEBASTIAN);
 }
 
 /** regisztráció után: visszaigazolás a felhasználónak, hogy elbíráljuk a kérését */
 export async function sendRegistrationReceived(to: string, name: string) {
-  await send(to, "[routeR] Megkaptuk a regisztrációdat", shell(
-    "Megkaptuk a regisztrációdat",
-    `Szia ${esc(name)}! Köszönjük, hogy regisztráltál a routeR-be. A kérésedet hamarosan elbíráljuk, és <b>e-mailben értesítünk</b>, hogy megadjuk-e a hozzáférést.`,
-  ));
+  await send(to, "Megkaptuk a routeR-regisztrációdat", routerMailHtml({
+    preheader: "Megkaptuk a regisztrációdat: rövid időn belül elbíráljuk, és e-mailben megírjuk a döntést.",
+    kicker: "Regisztráció · megérkezett",
+    title: `Megkaptuk,<br>${esc(firstName(name))}.`,
+    accent: "Hamarosan jelentkezünk.",
+    paragraphs: [
+      `Kedves ${esc(name)}!`,
+      "Köszönjük, hogy regisztráltál a <b>routeR</b>-be. A fiókod létrejött, most már csak a jóváhagyásunk hiányzik.",
+    ],
+    callout: { label: "MI TÖRTÉNIK MOST?", html: "A regisztrációdat <b style=\"color:#00FF9D\">rövid időn belül elbíráljuk</b>, és e-mailben megírjuk, megadjuk-e a hozzáférést." },
+    signed: true,
+    why: "Ezt a levelet azért kaptad, mert regisztráltál a routeR-be. Ha nem te voltál, nyugodtan hagyd figyelmen kívül.",
+  }), SEBASTIAN);
 }
 
 /** elutasítás (függő fiók tiltása): értesítés a felhasználónak */
 export async function sendRejected(to: string, name: string) {
-  await send(to, "[routeR] A hozzáférési kérelmedről", shell(
-    "A hozzáférési kérelmedről",
-    `Szia ${esc(name)}! Köszönjük az érdeklődésed a routeR iránt. A regisztrációdat átnéztük, de most nem tudunk hozzáférést adni. Ha kérdésed van, válaszolj erre a levélre, vagy írj nekünk a tesotter.com oldalon.`,
-  ));
+  await send(to, "A routeR-hozzáférési kérelmedről", routerMailHtml({
+    preheader: "Átnéztük a routeR-regisztrációdat.",
+    kicker: "Hozzáférés · elbírálva",
+    title: `Köszönjük,<br>${esc(firstName(name))}.`,
+    accent: "Most nem tudunk hozzáférést adni.",
+    paragraphs: [
+      `Kedves ${esc(name)}!`,
+      "Köszönjük az érdeklődésedet a <b>routeR</b> iránt. A regisztrációdat átnéztük, de most sajnos nem tudunk hozzáférést adni.",
+      "Ha úgy gondolod, hogy tévedés történt, vagy szeretnéd elmondani, mire használnád a routeR-t, válaszolj erre a levélre, és újra átnézzük.",
+    ],
+    signed: true,
+    why: "Ezt a levelet azért kaptad, mert regisztráltál a routeR-be.",
+  }), SEBASTIAN);
 }
 
 /** jelszó-visszaállító link (1 óráig érvényes, egyszer használható) */
 export async function sendPasswordReset(to: string, name: string, token: string) {
-  await send(to, "[routeR] Jelszó visszaállítása", shell(
-    "Jelszó visszaállítása",
-    `Szia ${esc(name)}! Jelszó-visszaállítást kértél a routeR fiókodhoz. A link <b>1 óráig</b> érvényes és csak egyszer használható.<br/><br/>Ha nem te kérted, nyugodtan hagyd figyelmen kívül ezt a levelet.`,
-    { href: `${site()}/reset?token=${token}`, label: "Új jelszó megadása" },
-  ));
+  await send(to, "routeR jelszó visszaállítása", routerMailHtml({
+    preheader: "Jelszó-visszaállítást kértél a routeR-fiókodhoz. A link 1 óráig érvényes.",
+    kicker: "Fiók · új jelszó",
+    title: "Új jelszó",
+    accent: "1 óráig érvényes link.",
+    paragraphs: [
+      `Kedves ${esc(name)}!`,
+      "Jelszó-visszaállítást kértél a routeR-fiókodhoz. Az alábbi gombbal adhatsz meg új jelszót. A link <b>1 óráig</b> érvényes, és csak egyszer használható.",
+    ],
+    cta: { href: `${site()}/reset?token=${token}`, label: "Új jelszó megadása" },
+    afterCta: "Ha nem te kérted, nyugodtan hagyd figyelmen kívül ezt a levelet: a jelszavad nem változik.",
+    why: "Ezt a levelet azért kaptad, mert a routeR-ben jelszó-visszaállítást kértek ehhez a címhez.",
+  }));
 }
