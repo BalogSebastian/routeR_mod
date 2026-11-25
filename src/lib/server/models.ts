@@ -33,6 +33,11 @@ export interface ITripSummary {
   roadKm: number;
   tollEur: number;
   totalEur: number;
+  /** költségbontás (az újabb mentéseknél) */
+  fuelEur?: number;
+  driverEur?: number;
+  vehicleEur?: number;
+  ferryEur?: number;
   drivingMin: number;
   days: number;
   arrival: string;
@@ -78,6 +83,27 @@ export interface IDriverLink {
   firstOpenedAt?: Date;
   lastOpenedAt?: Date;
   createdAt: Date;
+}
+
+/** Helyeim: a felhasználó mentett címei (telephely, ügyfél, rakodóhely…) megjegyzésekkel */
+export type PlaceKind = "depot" | "customer" | "loading" | "parking" | "service" | "other";
+export interface IPlace {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  name: string;
+  kind: PlaceKind;
+  label: string;
+  lat: number;
+  lon: number;
+  cc?: string;
+  hours?: string;
+  contact?: string;
+  phone?: string;
+  notes?: string;
+  uses: number;
+  lastUsedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface IMailLog { _id: Types.ObjectId; to: string; subject: string; ok: boolean; error?: string; response?: string; at: Date }
@@ -153,6 +179,25 @@ const driverLinkSchema = new Schema<IDriverLink>(
   { versionKey: false },
 );
 
+const placeSchema = new Schema<IPlace>(
+  {
+    userId: { type: Schema.Types.ObjectId, required: true, index: true },
+    name: { type: String, required: true, trim: true, maxlength: 80 },
+    kind: { type: String, enum: ["depot", "customer", "loading", "parking", "service", "other"], default: "other" },
+    label: { type: String, required: true, maxlength: 240 },
+    lat: { type: Number, required: true },
+    lon: { type: Number, required: true },
+    cc: String,
+    hours: { type: String, maxlength: 120 },
+    contact: { type: String, maxlength: 120 },
+    phone: { type: String, maxlength: 40 },
+    notes: { type: String, maxlength: 1000 },
+    uses: { type: Number, default: 0 },
+    lastUsedAt: Date,
+  },
+  { timestamps: true },
+);
+
 const mailLogSchema = new Schema<IMailLog>({
   to: String, subject: String, ok: Boolean, error: String, response: String,
   at: { type: Date, default: Date.now, expires: 60 * 60 * 24 * 30 },
@@ -167,6 +212,7 @@ const nearSchema = new Schema<INearCache>({
 });
 
 export interface Db {
+  Place: Model<IPlace>;
   DriverLink: Model<IDriverLink>;
   NearCache: Model<INearCache>;
   MailLog: Model<IMailLog>;
@@ -182,6 +228,7 @@ export async function getDb(): Promise<Db> {
   if (models) return models;
   const c = await connect();
   models = {
+    Place: (c.models.Place as Model<IPlace>) ?? c.model<IPlace>("Place", placeSchema, "places"),
     DriverLink: (c.models.DriverLink as Model<IDriverLink>) ?? c.model<IDriverLink>("DriverLink", driverLinkSchema, "driverlinks"),
     NearCache: (c.models.NearCache as Model<INearCache>) ?? c.model<INearCache>("NearCache", nearSchema, "nearcache"),
     MailLog: (c.models.MailLog as Model<IMailLog>) ?? c.model<IMailLog>("MailLog", mailLogSchema, "maillog"),

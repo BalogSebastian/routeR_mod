@@ -260,3 +260,18 @@ details > summary::-webkit-details-marker { display: none; }
 /* görgethető, de látható görgetősáv nélküli panel (oldalsáv) */
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ---------- nyomtatható dokumentum (árajánlat, kimutatás): csak a #rr-print-root kerül a papírra ---------- */
+#rr-print-root { display: none; }
+@media print {
+  body.rr-printing > *:not(#rr-print-root) { display: none !important; }
+  body.rr-printing #rr-print-root { display: block !important; }
+  body.rr-printing { background: #fff !important; }
+  @page { size: A4; margin: 12mm; }
+  .rr-doc { box-shadow: none !important; border: 0 !important; width: auto !important; }
+  .rr-doc * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+@keyframes rr-bar { from { transform: scaleX(0); } to { transform: none; } }
+/* rakodás: a raklapok sorban „lerakódnak” */
+@keyframes rr-pallet { from { opacity: 0; transform: translateY(-14px) scale(0.92); } to { opacity: 1; transform: none; } }
+.rr-pallet { transform-box: fill-box; transform-origin: center; animation: rr-pallet 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }

@@ -65,6 +65,7 @@ export default function TripsList({ initial }: { initial: TripListItem[] }) {
               <TripCard t={t} />
               <div className="mt-2 flex justify-end gap-4 px-1 font-mono text-[11px] font-bold uppercase tracking-wide">
                 <button className={t.favorite ? "text-black" : "text-black/40 hover:text-black"} onClick={() => toggleFav(t)}>{t.favorite ? "★ Kedvenc" : "☆ Kedvenc"}</button>
+                <Link className="text-black/40 hover:text-black" href={`/app/quote?trip=${t.id}`}>€ Ajánlat</Link>
                 <button className="text-black/40 hover:text-black" onClick={() => duplicate(t)}>⧉ Duplikálás</button>
                 <button className="text-black/40 hover:text-black" onClick={() => rename(t)}>Átnevezés</button>
                 <button className="text-black/40 hover:text-rose-600" onClick={() => remove(t)}>Törlés</button>

@@ -4,6 +4,7 @@ import RouteNet from "@/components/app/RouteNet";
 import { eur, km } from "@/lib/format";
 import { getUser } from "@/lib/server/auth";
 import { getDb } from "@/lib/server/models";
+import { TOOLS } from "@/lib/nav";
 
 export default async function Dashboard() {
   const u = (await getUser())!;
@@ -112,6 +113,26 @@ export default async function Dashboard() {
         ))}
       </section>
 
+      {/* eszközök */}
+      <section>
+        <div className="mb-4 flex items-center gap-3">
+          <span className="h-[2px] w-10 bg-black" />
+          <span className={kicker}>Eszközök a napi munkához</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          {TOOLS.map((t, i) => (
+            <Link key={t.href} href={t.href} className="rr-up group relative overflow-hidden border-2 border-black bg-white p-4 transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#00ff9d]" style={{ animationDelay: `${0.15 + i * 0.05}s` }}>
+              <span aria-hidden className="absolute inset-0 origin-bottom scale-y-0 bg-black transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-y-100" />
+              <span className="relative flex h-10 w-10 items-center justify-center bg-[#00ff9d] text-black transition group-hover:shadow-[3px_3px_0_0_#fff]">
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d={t.icon} /></svg>
+              </span>
+              <span className="relative mt-4 block text-[14px] font-black uppercase tracking-tight text-black transition group-hover:text-white">{t.label}</span>
+              <span className="relative mt-1 block text-[12px] leading-snug text-black/50 transition group-hover:text-white/60">{t.desc}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <div className="grid gap-6 lg:grid-cols-[1fr_330px]">
         <section className={`${card} p-5 md:p-6`}>
           <div className="mb-6 flex items-center justify-between">
@@ -165,7 +186,7 @@ export default async function Dashboard() {
           <section className={`${card} p-5 md:p-6`}>
             <div className="mb-5 flex items-center justify-between">
               <h2 className={head}>Járműveim</h2>
-              <Link href="/planner" className="border-b-2 border-[#00ff9d] font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-black transition hover:bg-[#00ff9d]">Kezelés</Link>
+              <Link href="/app/vehicles" className="border-b-2 border-[#00ff9d] font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-black transition hover:bg-[#00ff9d]">Kezelés</Link>
             </div>
             {fleet.length ? (
               <ul className="divide-y divide-black/10 border-y border-black/10">
@@ -180,7 +201,7 @@ export default async function Dashboard() {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm leading-relaxed text-black/55">Még nincs mentett járműved. A tervezőben a jármű-kártyán adhatsz hozzá flottát.</p>
+              <p className="text-sm leading-relaxed text-black/55">Még nincs mentett járműved. A Járműveim oldalon adhatsz hozzá.</p>
             )}
           </section>
 

@@ -10,6 +10,7 @@ export const tripSchema = z.object({
   options: z.record(z.string(), z.unknown()),
   summary: z.object({
     distanceKm: z.number(), roadKm: z.number(), tollEur: z.number(), totalEur: z.number(), drivingMin: z.number(),
+    fuelEur: z.number().optional(), driverEur: z.number().optional(), vehicleEur: z.number().optional(), ferryEur: z.number().optional(),
     days: z.number(), arrival: z.string().max(40), countries: z.array(z.string().max(4)).max(30), roads: z.array(z.string().max(30)).max(40),
   }),
 });

@@ -70,6 +70,8 @@ const RAIL = [
   { href: "/app/trips", label: "Fuvaraim", icon: "M4 6h16M4 12h16M4 18h10", active: false },
   { href: "/app/vehicles", label: "Járműveim", icon: "M2 7h12v9H2zM14 10h4.5L22 13.5V16h-8M6.5 19.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM17.5 19.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6z", active: false },
   { href: "/app/drivers", label: "Sofőr-linkek", icon: "M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z", active: false },
+  { href: "/app/quote", label: "Árajánlat", icon: "M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6zM14 3v6h6M15 12.6a3 3 0 100 4.8M9 14h4.5M9 16h4.5", active: false },
+  { href: "/app/places", label: "Helyeim", icon: "M12 21s-7-6.2-7-12a7 7 0 1114 0c0 5.8-7 12-7 12zM12 11.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z", active: false },
   { href: "/app/settings", label: "Fiók", icon: "M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6", active: false },
 ];
 const NONE: BorderCrossing[] = [];
@@ -118,7 +120,7 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
   const [tripId, setTripId] = useState<string | null>(initialTrip?.id ?? null);
   const [tripName, setTripName] = useState(initialTrip?.name ?? "");
   const [saveState, setSaveState] = useState<"" | "saving" | "saved" | "error">("");
-  const [waypoints, setWaypoints] = useState<(Waypoint | null)[]>(() => (shared.w && shared.w.length >= 2 ? shared.w : [null, null]));
+  const [waypoints, setWaypoints] = useState<(Waypoint | null)[]>(() => (shared.w && shared.w.length >= 2 ? shared.w : shared.w?.length === 1 ? [shared.w[0], null] : [null, null]));
   const [fleet, setFleet] = useState<FleetItem[]>(() => saved.fleet ?? []);
   const [defaultFleet, setDefaultFleet] = useState<string | undefined>(saved.defaultFleet);
   const [vehicle, setVehicle] = useState<Vehicle>(() => {
@@ -633,6 +635,7 @@ export default function Planner({ initialSaved, initialTrip }: { initialSaved: S
       options: { avoidTolls: options.avoidTolls, avoidHighways: options.avoidHighways, flexRules: options.flexRules, waitBans: options.waitBans, departure: options.departure },
       summary: {
         distanceKm: best.distanceKm, roadKm: best.roadKm, tollEur: best.tollTotalEur, totalEur: best.totalEur, drivingMin: best.drivingMin,
+        fuelEur: best.fuelCostEur, driverEur: best.driverCostEur, vehicleEur: best.vehicleCostEur, ferryEur: best.ferryTotalEur,
         days: best.schedule.days, arrival: best.schedule.arrival, countries: best.countries.map((c) => c.country).filter((c, i, a) => a.indexOf(c) === i), roads: roads.slice(0, 40),
       },
     };
